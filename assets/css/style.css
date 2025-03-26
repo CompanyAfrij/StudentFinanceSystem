@@ -1,0 +1,100 @@
+/* Button Container */
+.button-container {
+    text-align: center;
+    margin-top: 20px;
+    display: flex;
+    justify-content: center;
+    gap: 15px; /* Space between buttons */
+}
+
+/* Button Styles */
+.btn {
+    display: inline-block;
+    padding: 8px 16px; /* Reduced padding */
+    font-size: 16px; /* Slightly smaller font size */
+    text-decoration: none;
+    color: rgb(255, 255, 255);
+    background-color: #800000;
+    border-radius: 25px; /* Rounded corners for a modern look */
+    transition: all 0.3s ease-in-out;
+    border: 2px solid transparent;
+    font-weight: bold;
+    width: 150px; /* Fixed width for uniform size */
+    text-align: center;
+    cursor: pointer;
+}
+
+/* Button hover effect */
+.btn:hover {
+    background-color:  #ffcc00;
+    color: #800000;
+    border: 2px solid #800000;
+}
+
+/* Center the form */
+.register-container {
+    width: 350px;
+    background: white;
+    padding: 20px;
+    margin: 50px auto;
+    border-radius: 8px;
+    box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+    text-align: center;
+}
+
+/* Form Headings */
+h2 {
+    margin-bottom: 20px;
+    font-size: 24px;
+    color: #333;
+}
+
+/* Form fields */
+.form-group {
+    text-align: left;
+    margin-bottom: 15px;
+}
+
+label {
+    display: block;
+    font-size: 14px;
+    color: #555;
+    margin-bottom: 5px;
+}
+
+input, select {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    font-size: 16px;
+}
+
+/* Login link */
+.login-text {
+    margin-top: 15px;
+    font-size: 14px;
+}
+
+.login-text a {
+    color: #007BFF;
+    text-decoration: none;
+}
+
+.login-text a:hover {
+    text-decoration: underline;
+}
+
+/* Background color for a subtle, professional look */
+body {
+    background: #ffffff; /* Classic Maroon */
+    margin: 0;
+    padding: 0;
+    color: #333; /* Dark gray text for better contrast */
+    font-family: Arial, sans-serif;
+    text-shadow: none; /* Removed shadow since there's no image */
+    display: flex;
+    flex-direction: column; /* Ensures normal layout flow */
+    min-height: 100vh; /* Ensures full height */
+}
+

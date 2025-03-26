@@ -1,14 +1,15 @@
-<?php 
+<?php
+session_start();
 include '../includes/config.php';
 
 // Check if course ID is provided
-if (!isset($_GET['id']) || empty($_GET['id']) || !is_numeric($_GET['id'])) {
+if (!isset($_GET['course_id']) || empty($_GET['course_id'])) {
     die("Invalid course selected.");
 }
 
-$course_id = intval($_GET['id']);
+$course_id = $_GET['course_id'];
 
-// Fetch course details securely
+// Fetch course details
 $query = "SELECT * FROM courses WHERE id = ?";
 $stmt = $conn->prepare($query);
 $stmt->bind_param("i", $course_id);
@@ -27,7 +28,7 @@ $course = $result->fetch_assoc();
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Course Details</title>
+    <title>Payment Page</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -46,26 +47,15 @@ $course = $result->fetch_assoc();
         h2 {
             color: #333;
         }
-        .btn {
-            background-color: #007bff;
-            color: white;
-            padding: 10px 20px;
-            text-decoration: none;
-            border-radius: 5px;
-        }
-        .btn:hover {
-            background-color: #0056b3;
-        }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h2><?= htmlspecialchars($course['course_name']) ?></h2>
-    <p><strong>Description:</strong> <?= nl2br(htmlspecialchars($course['description'])) ?></p>
-    <p><strong>Price:</strong> $<?= isset($course['price']) && $course['price'] !== '' ? htmlspecialchars($course['price']) : 'N/A' ?></p>
-
-    <a href="payment.php?course_id=<?= htmlspecialchars($course['id']) ?>" class="btn">Pay Now</a>
+    <h2>Payment for <?= $course['course_name'] ?></h2>
+    <p>Amount to Pay: $<?= $course['price'] ?></p>
+    
+    <p>Payment Integration Coming Soon...</p>
 </div>
 
 </body>

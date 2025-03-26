@@ -12,29 +12,44 @@ include '../includes/database.php';
     <link rel="stylesheet" href="../assets/css/style.css">
 </head>
 <body>
+
     <?php include '../includes/navbar.php'; ?>
-    <div class="container">
+
+    <div class="register-container">
         <h2>Register</h2>
         <form action="register-process.php" method="POST">
-            <label for="name">Full Name:</label>
-            <input type="text" id="name" name="name" required>
+            <div class="form-group">
+                <label for="fullname">Full Name</label>
+                <input type="text" id="fullname" name="fullname" required>
+            </div>
             
-            <label for="email">Email:</label>
-            <input type="email" id="email" name="email" required>
+            <div class="form-group">
+                <label for="email">Email</label>
+                <input type="email" id="email" name="email" required>
+            </div>
             
-            <label for="password">Password:</label>
-            <input type="password" id="password" name="password" required>
-            
-            <label for="role">Role:</label>
-            <select id="role" name="role" required>
-                <option value="student">Student</option>
-                <option value="admin">Admin</option>
-            </select>
-            
-            <button type="submit">Register</button>
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" required>
+            </div>
+
+            <div class="form-group">
+                <label for="role">Role</label>
+                <select id="role" name="role" required>
+                    <option value="student">Student</option>
+                    <option value="admin">Admin</option>
+                </select>
+            </div>
+
+            <button type="submit" class="btn">Register</button>
+
+            <p class="login-text" style="color: black;">
+    Already have an account? <a href="login.php" style="color: blue; text-decoration: underline;">Login here</a>
+</p>
         </form>
-        <p>Already have an account? <a href="login.php">Login here</a></p>
     </div>
+
     <?php include '../includes/footer.php'; ?>
+
 </body>
 </html>

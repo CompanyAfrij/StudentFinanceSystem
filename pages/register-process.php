@@ -1,27 +1,34 @@
 <?php
-include '../includes/database.php';
+session_start();
+include '../includes/config.php'; // Includes database connection & constants
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    $name = mysqli_real_escape_string($conn, $_POST['name']);
-    $email = mysqli_real_escape_string($conn, $_POST['email']);
-    $password = password_hash($_POST['password'], PASSWORD_DEFAULT); // Hashing password
-    $role = mysqli_real_escape_string($conn, $_POST['role']);
+    $fullname = $_POST['fullname']; // Match input name="fullname"
+    $email = $_POST['email'];
+    $password = password_hash($_POST['password'], PASSWORD_DEFAULT); // Secure password
+    $role = $_POST['role']; // Get selected role
 
-    // Check if email already exists
-    $check_email = "SELECT * FROM users WHERE email = '$email'";
-    $result = $conn->query($check_email);
+    // Insert user into the database
+    $query = "INSERT INTO users (name, email, password, role) VALUES (?, ?, ?, ?)";
+    $stmt = $conn->prepare($query);
+    $stmt->bind_param("ssss", $fullname, $email, $password, $role);
 
-    if ($result->num_rows > 0) {
-        echo "Email already exists! Try another.";
-    } else {
-        // Insert user into database
-        $query = "INSERT INTO users (name, email, password, role) VALUES ('$name', '$email', '$password', '$role')";
+    if ($stmt->execute()) {
+        $_SESSION['user_id'] = $stmt->insert_id;
+        $_SESSION['role'] = $role;
 
-        if ($conn->query($query) === TRUE) {
-            echo "Registration successful! <a href='login.php'>Login here</a>";
+        // Redirect based on role
+        if ($role == 'admin') {
+            header("Location: " . BASE_URL . "admin/admin-dashboard.php");
         } else {
-            echo "Error: " . $conn->error;
+            header("Location: " . BASE_URL . "pages/courses.php");
         }
+        exit();
+    } else {
+        echo "Registration failed. Please try again.";
     }
+
+    $stmt->close();
+    $conn->close();
 }
 ?>
