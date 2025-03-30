@@ -2,8 +2,16 @@
 session_start();
 include '../includes/database.php'; // Ensure database connection
 
+// Debugging session issues
+if (!isset($_SESSION['role'])) {
+    echo "<pre>";
+    print_r($_SESSION);
+    echo "</pre>";
+    exit("Session not set. Check your login system.");
+}
+
 // Ensure only admin access
-if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
+if ($_SESSION['role'] !== 'admin') {
     header("Location: ../pages/login.php");
     exit();
 }
@@ -46,13 +54,13 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
             margin-top: 10px;
         }
         .btn:hover {
-            background-color:rgb(167, 12, 12);
+            background-color: rgb(167, 12, 12);
         }
         .logout-btn {
             background-color: #800000;
         }
         .logout-btn:hover {
-            background-color:rgb(192, 25, 25);
+            background-color: rgb(192, 25, 25);
         }
     </style>
 </head>

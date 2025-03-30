@@ -1,6 +1,6 @@
-<?php
+<?php 
 session_start();
-include '../includes/database.php'; // Ensure the database connection is correct
+include '../includes/database.php'; // Ensure database connection
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $email = $_POST['email'];
@@ -19,17 +19,18 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         if (password_verify($password, $user['password'])) {
             $_SESSION['user_id'] = $user['id'];
             $_SESSION['role'] = trim(strtolower($user['role'])); // Normalize role
+            $_SESSION['email'] = $user['email'];
 
             // Debugging output before redirection
-            echo "Role detected: " . htmlspecialchars($_SESSION['role']) . "<br>";
-            
+            echo "<pre>";
+            print_r($_SESSION);
+            echo "</pre>";
+
             // Redirect based on role
             if ($_SESSION['role'] == 'admin') {
-                echo "Redirecting as Admin...";
                 header("Location: ../admin/admin-dashboard.php");
                 exit();
             } elseif ($_SESSION['role'] == 'student') {
-                echo "Redirecting as Student...";
                 header("Location: /FinanceManagementSystem/pages/courses.php");
                 exit();
             } else {

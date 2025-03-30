@@ -3,15 +3,28 @@ session_start();
 require '../includes/config.php'; // Database connection
 
 // Check if the admin is logged in
-if (!isset($_SESSION['admin_id'])) {
-    header("Location: login.php");
+if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
+    header("Location: ../pages/login.php"); // Ensure correct login path
     exit();
 }
+
 
 // Fetch current settings from database
 $sql = "SELECT * FROM settings LIMIT 1";
 $result = $conn->query($sql);
-$settings = $result->fetch_assoc();
+
+if ($result->num_rows > 0) {
+    $settings = $result->fetch_assoc();
+} else {
+    $settings = [
+        "system_name" => "",
+        "contact_email" => "",
+        "default_currency" => "USD",
+        "enable_registration" => 0,
+        "max_courses" => 0
+    ];
+}
+
 
 // Handle form submission
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
@@ -43,7 +56,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     <link rel="stylesheet" href="../assets/css/style.css">
 </head>
 <body>
-    <?php include 'admin-navbar.php'; ?>
+<?php include '../includes/navbar.php'; ?>
+
 
     <div class="settings-container">
         <h2>Manage System Settings</h2>
