@@ -72,6 +72,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         }
         h2 {
             margin-bottom: 20px;
+            color: #800000;
         }
         .input-group {
             margin-bottom: 15px;
@@ -81,6 +82,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             display: block;
             font-size: 14px;
             margin-bottom: 5px;
+            color: #333;
         }
         input {
             width: 100%;
@@ -88,6 +90,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             border: 1px solid #ccc;
             border-radius: 5px;
             font-size: 16px;
+            box-sizing: border-box;
         }
         .login-btn {
             width: 100%;
@@ -99,9 +102,26 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             border-radius: 5px;
             cursor: pointer;
             transition: 0.3s;
+            margin-bottom: 15px;
         }
         .login-btn:hover {
-            background-color: #ffcc00;
+            background-color: #a00000;
+        }
+        .forgot-password {
+            display: block;
+            text-align: center;
+            color: #800000;
+            text-decoration: none;
+            font-size: 14px;
+            margin-top: 10px;
+        }
+        .forgot-password:hover {
+            text-decoration: underline;
+        }
+        .error-message {
+            color: red;
+            font-size: 14px;
+            margin-top: 10px;
         }
     </style>
 </head>
@@ -118,8 +138,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 <input type="password" id="password" name="password" required>
             </div>
             <button type="submit" class="login-btn">Login</button>
+            <a href="forgot-password.php" class="forgot-password">Forgot Password?</a>
         </form>
-        <?php if (isset($error)) echo "<p style='color:red;'>$error</p>"; ?>
+        <?php if (isset($error)): ?>
+            <p class="error-message"><?php echo htmlspecialchars($error); ?></p>
+        <?php endif; ?>
     </div>
 </body>
 </html>

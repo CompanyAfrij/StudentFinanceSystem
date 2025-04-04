@@ -47,14 +47,14 @@ $course = $result->fetch_assoc();
             color: #333;
         }
         .btn {
-            background-color: #007bff;
+            background-color: #800000;
             color: white;
             padding: 10px 20px;
             text-decoration: none;
             border-radius: 5px;
         }
         .btn:hover {
-            background-color: #0056b3;
+            background-color:rgb(196, 157, 4);
         }
     </style>
 </head>
