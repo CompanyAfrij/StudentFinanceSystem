@@ -18,20 +18,28 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         // Verify password
         if (password_verify($password, $user['password'])) {
             $_SESSION['user_id'] = $user['id'];
-            $_SESSION['role'] = trim(strtolower($user['role'])); // Normalize role
+            $_SESSION['role'] = trim(strtolower($user['role']));
             $_SESSION['email'] = $user['email'];
-
-            // Debugging output before redirection
-            echo "<pre>";
-            print_r($_SESSION);
-            echo "</pre>";
 
             // Redirect based on role
             if ($_SESSION['role'] == 'admin') {
                 header("Location: ../admin/admin-dashboard.php");
                 exit();
             } elseif ($_SESSION['role'] == 'student') {
-                header("Location: /FinanceManagementSystem/pages/courses.php");
+                // Check if the student has already enrolled in a course
+                $student_id = $_SESSION['user_id'];
+                $check_enrollment = $conn->prepare("SELECT * FROM enrollments WHERE student_id = ?");
+                $check_enrollment->bind_param("i", $student_id);
+                $check_enrollment->execute();
+                $enrollment_result = $check_enrollment->get_result();
+
+                if ($enrollment_result->num_rows > 0) {
+                    // Already enrolled — go to student dashboard
+                    header("Location: /FinanceManagementSystem/pages/student-dashboard.php");
+                } else {
+                    // Not enrolled yet — go to course selection
+                    header("Location: /FinanceManagementSystem/pages/courses.php");
+                }
                 exit();
             } else {
                 echo "Error: Role not recognized (" . htmlspecialchars($_SESSION['role']) . ")";
@@ -46,6 +54,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 }
 ?>
 
+<!-- HTML PART -->
 <!DOCTYPE html>
 <html lang="en">
 <head>

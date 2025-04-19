@@ -1,63 +1,63 @@
 <?php
 session_start();
-include '../includes/database.php';
+require './includes/database.php';
 
-if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    $token = $_POST['token'];
-    $new_password = password_hash($_POST['password'], PASSWORD_DEFAULT);
+if (isset($_GET['token'])) {
+    $token = $_GET['token'];
 
-    // Find the email associated with the token
-    $query = "SELECT email FROM password_resets WHERE token = ?";
-    $stmt = $conn->prepare($query);
+    // Validate token
+    $stmt = $conn->prepare("SELECT * FROM users WHERE reset_token = ? AND token_expiry > NOW()");
     $stmt->bind_param("s", $token);
     $stmt->execute();
     $result = $stmt->get_result();
-    $reset = $result->fetch_assoc();
 
-    if ($reset) {
-        $email = $reset['email'];
+    if ($result->num_rows === 1) {
+        $user = $result->fetch_assoc();
 
-        // Update password
-        $updateQuery = "UPDATE users SET password = ? WHERE email = ?";
-        $stmt = $conn->prepare($updateQuery);
-        $stmt->bind_param("ss", $new_password, $email);
-        $stmt->execute();
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $newPassword = $_POST['password'];
+            $confirmPassword = $_POST['confirm_password'];
 
-        // Delete token after successful reset
-        $deleteQuery = "DELETE FROM password_resets WHERE email = ?";
-        $stmt = $conn->prepare($deleteQuery);
-        $stmt->bind_param("s", $email);
-        $stmt->execute();
+            if ($newPassword === $confirmPassword) {
+                $hashedPassword = password_hash($newPassword, PASSWORD_DEFAULT);
 
-        $_SESSION['success'] = "Password successfully updated. You can now log in.";
-        header("Location: login.php");
-        exit();
+                // Update the password and clear the token
+                $update = $conn->prepare("UPDATE users SET password = ?, reset_token = NULL, token_expiry = NULL WHERE id = ?");
+                $update->bind_param("si", $hashedPassword, $user['id']);
+                $update->execute();
+
+                $success = "Password has been reset successfully. <a href='./pages/login.php'>Login now</a>";
+            } else {
+                $error = "Passwords do not match.";
+            }
+        }
     } else {
-        $_SESSION['error'] = "Invalid or expired token.";
+        $error = "Invalid or expired token.";
     }
+} else {
+    $error = "Token not provided.";
 }
-
-if (!isset($_GET['token'])) {
-    die("Invalid request.");
-}
-
-$token = $_GET['token'];
 ?>
 
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
     <title>Reset Password</title>
 </head>
 <body>
     <h2>Reset Password</h2>
-    <?php if (isset($_SESSION['error'])) { echo "<p style='color:red'>" . $_SESSION['error'] . "</p>"; unset($_SESSION['error']); } ?>
-    <form action="reset-password.php" method="POST">
-        <input type="hidden" name="token" value="<?php echo htmlspecialchars($token); ?>">
-        <label for="password">New Password</label>
-        <input type="password" name="password" required>
-        <button type="submit">Reset Password</button>
-    </form>
+    <?php
+    if (isset($error)) echo "<p style='color:red;'>$error</p>";
+    if (isset($success)) echo "<p style='color:green;'>$success</p>";
+    ?>
+    <?php if (!isset($success) && isset($user)) { ?>
+        <form method="POST">
+            <label>New Password:</label><br>
+            <input type="password" name="password" required><br><br>
+            <label>Confirm Password:</label><br>
+            <input type="password" name="confirm_password" required><br><br>
+            <button type="submit">Reset Password</button>
+        </form>
+    <?php } ?>
 </body>
 </html>

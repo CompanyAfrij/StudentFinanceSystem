@@ -20,6 +20,10 @@ if ($result->num_rows == 0) {
 }
 
 $course = $result->fetch_assoc();
+$total_amount = isset($course['price']) && $course['price'] !== '' ? floatval($course['price']) : 0;
+$registration_fee = 5000;
+$certificate_fee = 5000;
+$course_fee = max(0, $total_amount - ($registration_fee + $certificate_fee));
 ?>
 
 <!DOCTYPE html>
@@ -30,43 +34,96 @@ $course = $result->fetch_assoc();
     <title>Course Details</title>
     <style>
         body {
-            font-family: Arial, sans-serif;
-            background-color: #f4f4f4;
-            text-align: center;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(to right, #f8f9fa, #e9ecef);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
         }
-        .container {
-            width: 50%;
-            margin: auto;
-            background: white;
-            padding: 20px;
-            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
-            border-radius: 10px;
-            margin-top: 50px;
+
+        .card {
+            background-color: #fff;
+            padding: 30px;
+            max-width: 500px;
+            width: 90%;
+            border-radius: 15px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease;
         }
-        h2 {
-            color: #333;
+
+        .card:hover {
+            transform: scale(1.02);
         }
+
+        .card h2 {
+            margin-bottom: 10px;
+            font-size: 26px;
+            color: #343a40;
+        }
+
+        .card p {
+            font-size: 16px;
+            color: #555;
+            line-height: 1.6;
+            margin: 8px 0;
+        }
+
+        .card p strong {
+            color: #000;
+        }
+
+        .price-row {
+            background-color: #f1f1f1;
+            padding: 10px 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            text-align: left;
+        }
+
         .btn {
             background-color: #800000;
-            color: white;
-            padding: 10px 20px;
+            color: #fff;
+            padding: 12px 25px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
             text-decoration: none;
-            border-radius: 5px;
+            display: inline-block;
+            margin-top: 20px;
+            transition: background-color 0.3s ease;
         }
+
         .btn:hover {
-            background-color:rgb(196, 157, 4);
+            background-color: #b8860b;
+        }
+
+        @media screen and (max-width: 600px) {
+            .card {
+                padding: 20px;
+            }
+            .card h2 {
+                font-size: 22px;
+            }
         }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <h2><?= htmlspecialchars($course['course_name']) ?></h2>
-    <p><strong>Description:</strong> <?= nl2br(htmlspecialchars($course['description'])) ?></p>
-    <p><strong>Price:</strong> $<?= isset($course['price']) && $course['price'] !== '' ? htmlspecialchars($course['price']) : 'N/A' ?></p>
+    <div class="card">
+        <h2><?= htmlspecialchars($course['course_name']) ?></h2>
+        <p><strong>Description:</strong> <?= nl2br(htmlspecialchars($course['description'])) ?></p>
 
-    <a href="payment.php?course_id=<?= htmlspecialchars($course['id']) ?>" class="btn">Pay Now</a>
-</div>
+        <div class="price-row">
+            <p><strong>Total Amount:</strong> Rs<?= number_format($total_amount, 2) ?></p>
+            <p><strong>Registration Fee:</strong> Rs<?= number_format($registration_fee, 2) ?></p>
+            <p><strong>Certificate Fee:</strong> Rs<?= number_format($certificate_fee, 2) ?></p>
+            <p><strong>Course Fee:</strong> Rs<?= number_format($course_fee, 2) ?></p>
+        </div>
+
+        <a href="payment.php?course_id=<?= htmlspecialchars($course['id']) ?>" class="btn">Pay Now</a>
+    </div>
 
 </body>
 </html>

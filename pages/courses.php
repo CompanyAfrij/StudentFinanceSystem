@@ -79,7 +79,7 @@ if (!$result) {
             <td><?= htmlspecialchars($row['course_name']) ?></td>
             <td><?= htmlspecialchars($row['description']) ?></td>
             <td>
-                <a href="course-details.php?id=<?= htmlspecialchars($row['id']) ?>" class="btn">Pay</a>
+                <a href="course-details.php?id=<?= htmlspecialchars($row['id']) ?>" class="btn">Select</a>
             </td>
         </tr>
         <?php endwhile; ?>
