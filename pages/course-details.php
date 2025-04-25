@@ -116,10 +116,11 @@ $course_fee = max(0, $total_amount - ($registration_fee + $certificate_fee));
         <p><strong>Description:</strong> <?= nl2br(htmlspecialchars($course['description'])) ?></p>
 
         <div class="price-row">
-            <p><strong>Total Amount:</strong> Rs<?= number_format($total_amount, 2) ?></p>
+            
             <p><strong>Registration Fee:</strong> Rs<?= number_format($registration_fee, 2) ?></p>
             <p><strong>Certificate Fee:</strong> Rs<?= number_format($certificate_fee, 2) ?></p>
             <p><strong>Course Fee:</strong> Rs<?= number_format($course_fee, 2) ?></p>
+            <p><strong>Total Amount:</strong> Rs<?= number_format($total_amount, 2) ?></p>
         </div>
 
         <a href="payment.php?course_id=<?= htmlspecialchars($course['id']) ?>" class="btn">Pay Now</a>

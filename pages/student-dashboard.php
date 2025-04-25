@@ -1,4 +1,4 @@
-<?php
+<?php 
 session_start();
 include '../includes/config.php';
 
@@ -20,7 +20,7 @@ $stmt->close();
 
 // Get all enrollments and course info
 $query = "
-    SELECT c.course_name, c.price AS total_fee, e.paid_amount, e.enrolled_at
+    SELECT e.id AS enrollment_id, c.course_name, c.price AS total_fee, e.paid_amount, e.enrolled_at
     FROM enrollments e
     JOIN courses c ON e.course_id = c.id
     WHERE e.student_id = ?
@@ -71,7 +71,7 @@ $stmt2->close();
             border-radius: 10px;
             box-shadow: 0 4px 12px rgba(0,0,0,0.1);
         }
-        h2 {
+        h2, h3, h4 {
             color: #333;
         }
         table {
@@ -99,6 +99,30 @@ $stmt2->close();
             font-weight: bold;
             color: green;
         }
+        .installment-table {
+            margin-top: 10px;
+            margin-bottom: 40px;
+            border: 1px solid #ccc;
+        }
+        .installment-table th, .installment-table td {
+            padding: 10px;
+            border: 1px solid #ddd;
+        }
+        .installment-table th {
+            background-color: #fefefe;
+            color: #800000;
+        }
+        button {
+            padding: 6px 12px;
+            background-color: #800000;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #a00000;
+        }
     </style>
 </head>
 <body>
@@ -112,30 +136,72 @@ $stmt2->close();
     <h2>Welcome, <?= htmlspecialchars($student_name) ?></h2>
 
     <?php if (count($enrollments)): ?>
-        <table>
-            <thead>
-                <tr>
-                    <th>Course</th>
-                    <th>Total Fee (Rs)</th>
-                    <th>Paid Amount (Rs)</th>
-                    <th>Balance (Rs)</th>
-                    <th>Enrolled At</th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php foreach ($enrollments as $enroll): 
-                    $balance = $enroll['total_fee'] - $enroll['paid_amount'];
-                ?>
+        <?php foreach ($enrollments as $enroll): 
+            $balance = $enroll['total_fee'] - $enroll['paid_amount'];
+        ?>
+            <h3><?= htmlspecialchars($enroll['course_name']) ?></h3>
+            <table>
+                <thead>
                     <tr>
-                        <td><?= htmlspecialchars($enroll['course_name']) ?></td>
+                        <th>Total Fee (Rs)</th>
+                        <th>Paid Amount (Rs)</th>
+                        <th>Balance (Rs)</th>
+                        <th>Enrolled At</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
                         <td><?= number_format($enroll['total_fee'], 2) ?></td>
                         <td class="paid"><?= number_format($enroll['paid_amount'], 2) ?></td>
                         <td class="balance"><?= number_format($balance, 2) ?></td>
                         <td><?= date('d M Y', strtotime($enroll['enrolled_at'])) ?></td>
                     </tr>
-                <?php endforeach; ?>
-            </tbody>
-        </table>
+                </tbody>
+            </table>
+
+            <?php
+            $enrollment_id = $enroll['enrollment_id'];
+            $installments = $conn->prepare("SELECT id, installment_number, amount, due_date, paid FROM installments WHERE enrollment_id = ?");
+            $installments->bind_param("i", $enrollment_id);
+            $installments->execute();
+            $result = $installments->get_result();
+            ?>
+
+            <?php if ($result->num_rows > 0): ?>
+                <h4>Installments</h4>
+                <table class="installment-table">
+                    <thead>
+                        <tr>
+                            <th>No.</th>
+                            <th>Amount</th>
+                            <th>Due Date</th>
+                            <th>Status</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    <?php while ($row = $result->fetch_assoc()): ?>
+                        <tr>
+                            <td><?= $row['installment_number'] ?></td>
+                            <td><?= number_format($row['amount'], 2) ?></td>
+                            <td><?= htmlspecialchars($row['due_date']) ?></td>
+                            <td><?= $row['paid'] ? '<span class="paid">Paid</span>' : '<span class="balance">Unpaid</span>' ?></td>
+                            <td>
+                                <?php if (!$row['paid']): ?>
+                                    <form action="payment.php" method="GET" style="margin: 0;">
+                                        <input type="hidden" name="installment_id" value="<?= $row['id'] ?>">
+                                        <button type="submit">Pay</button>
+                                    </form>
+                                <?php else: ?>
+                                    <span class="paid">Paid</span>
+                                <?php endif; ?>
+                            </td>
+                        </tr>
+                    <?php endwhile; ?>
+                    </tbody>
+                </table>
+            <?php endif; ?>
+        <?php endforeach; ?>
     <?php else: ?>
         <p>You have not enrolled in any courses yet. <a href="courses.php">Browse Courses</a></p>
     <?php endif; ?>

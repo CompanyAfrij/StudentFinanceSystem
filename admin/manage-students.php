@@ -8,6 +8,7 @@ $courses = $conn->query("SELECT id, course_name FROM courses");
 // Base query
 $filter_query = "
     SELECT 
+        e.id AS enrollment_id,
         e.student_id,
         u.name AS student_name,
         e.course_id,
@@ -86,6 +87,7 @@ $result = $stmt->get_result();
             border-radius: 10px;
             overflow: hidden;
             box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            margin-top: 30px;
         }
         th, td {
             padding: 15px;
@@ -101,6 +103,9 @@ $result = $stmt->get_result();
         }
         #searchInput {
             float: right;
+        }
+        h3 {
+            margin-top: 60px;
         }
     </style>
     <script>
@@ -163,6 +168,54 @@ $result = $stmt->get_result();
             <?php endwhile; ?>
         <?php else: ?>
             <tr><td colspan="8">No student enrollments found.</td></tr>
+        <?php endif; ?>
+    </tbody>
+</table>
+
+<?php
+// Fetch and display installment details
+$sql = "SELECT 
+            u.name AS student_name, 
+            c.course_name, 
+            i.installment_number, 
+            i.amount, 
+            i.due_date, 
+            i.paid 
+        FROM installments i
+        JOIN enrollments e ON i.enrollment_id = e.id
+        JOIN users u ON e.student_id = u.id
+        JOIN courses c ON e.course_id = c.id
+        ORDER BY u.name, i.installment_number";
+
+$installments = $conn->query($sql);
+?>
+
+<h3>All Installments</h3>
+<table>
+    <thead>
+        <tr>
+            <th>Student</th>
+            <th>Course</th>
+            <th>Installment No.</th>
+            <th>Amount (Rs)</th>
+            <th>Due Date</th>
+            <th>Status</th>
+        </tr>
+    </thead>
+    <tbody>
+        <?php if ($installments->num_rows > 0): ?>
+            <?php while ($row = $installments->fetch_assoc()): ?>
+                <tr>
+                    <td><?= htmlspecialchars($row['student_name']) ?></td>
+                    <td><?= htmlspecialchars($row['course_name']) ?></td>
+                    <td><?= $row['installment_number'] ?></td>
+                    <td><?= number_format($row['amount'], 2) ?></td>
+                    <td><?= htmlspecialchars($row['due_date']) ?></td>
+                    <td><?= $row['paid'] ? 'Paid' : 'Unpaid' ?></td>
+                </tr>
+            <?php endwhile; ?>
+        <?php else: ?>
+            <tr><td colspan="6">No installment records found.</td></tr>
         <?php endif; ?>
     </tbody>
 </table>
