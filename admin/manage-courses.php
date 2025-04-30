@@ -47,7 +47,7 @@ if (isset($_GET['delete_id'])) {
     $stmt->close();
 }
 
-$result = $conn->query("SELECT * FROM courses ORDER BY id DESC");
+$result = $conn->query("SELECT * FROM courses ORDER BY id ASC");
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -55,10 +55,46 @@ $result = $conn->query("SELECT * FROM courses ORDER BY id DESC");
     <meta charset="UTF-8">
     <title>Manage Courses</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+        .theme-btn {
+            background-color: #800000;
+            color: white;
+        }
+        .theme-btn:hover {
+            background-color: #a00000;
+            color: white;
+        }
+        .btn-edit {
+            background: linear-gradient(to right, #800000, #a52a2a);
+            color: #fff;
+            border: none;
+            min-width: 80px;
+        }
+        .btn-edit:hover {
+            background: linear-gradient(to right, #a52a2a, #800000);
+        }
+        .btn-danger {
+            min-width: 80px;
+        }
+        #searchInput {
+            max-width: 300px;
+            border: 2px solid #800000;
+            border-radius: 5px;
+            padding: 8px 12px;
+        }
+        #searchInput:focus {
+            outline: none;
+            box-shadow: 0 0 0 0.2rem rgba(128, 0, 0, 0.25);
+            border-color: #800000;
+        }
+    </style>
 </head>
 <body>
 <div class="container mt-5">
-    <h2 class="mb-4">Manage Courses</h2>
+    <h2 class="mb-4 text-center" style="color: #800000;">Manage Courses</h2>
 
     <?php if (!empty($message)): ?>
         <div class="alert alert-<?= $alertClass ?> alert-dismissible fade show" role="alert">
@@ -67,15 +103,15 @@ $result = $conn->query("SELECT * FROM courses ORDER BY id DESC");
         </div>
     <?php endif; ?>
 
-    <div class="d-flex justify-content-between mb-3">
-        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#courseModal">Add New Course</button>
-        <input type="text" id="searchInput" class="form-control w-50" placeholder="Search courses...">
+    <div class="d-flex justify-content-between mb-3 align-items-center">
+        <button class="btn theme-btn" data-bs-toggle="modal" data-bs-target="#courseModal">➕ Add New Course</button>
+        <input type="text" id="searchInput" class="form-control" placeholder="🔍 Search courses...">
     </div>
 
-    <table class="table table-bordered table-hover" id="coursesTable">
-        <thead class="table-dark">
+    <table class="table table-bordered table-hover bg-white" id="coursesTable">
+        <thead style="background-color: #800000; color: white;">
         <tr>
-            <th>ID</th>
+            <th>#</th>
             <th>Course Name</th>
             <th>Description</th>
             <th>Duration</th>
@@ -84,16 +120,18 @@ $result = $conn->query("SELECT * FROM courses ORDER BY id DESC");
         </tr>
         </thead>
         <tbody>
-        <?php while ($row = $result->fetch_assoc()): ?>
+        <?php
+        $index = 1;
+        while ($row = $result->fetch_assoc()): ?>
             <tr>
-                <td><?= $row['id'] ?></td>
+                <td><?= $index++ ?></td>
                 <td><?= htmlspecialchars($row['course_name']) ?></td>
                 <td><?= htmlspecialchars($row['description']) ?></td>
                 <td><?= htmlspecialchars($row['duration']) ?></td>
                 <td><?= number_format($row['price'], 2) ?></td>
-                <td>
-                    <button class="btn btn-sm btn-info text-white" onclick='editCourse(<?= json_encode($row) ?>)'>Edit</button>
-                    <a class="btn btn-sm btn-danger" href="?delete_id=<?= $row['id'] ?>" onclick="return confirm('Delete this course?')">Delete</a>
+                <td class="text-nowrap">
+                    <button class="btn btn-sm btn-edit me-1" onclick='editCourse(<?= json_encode($row) ?>)'>✏️ Edit</button>
+                    <a class="btn btn-sm btn-danger" href="?delete_id=<?= $row['id'] ?>" onclick="return confirm('Delete this course?')">🗑️ Delete</a>
                 </td>
             </tr>
         <?php endwhile; ?>
@@ -128,8 +166,8 @@ $result = $conn->query("SELECT * FROM courses ORDER BY id DESC");
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="submit" name="save_course" class="btn btn-success">Save</button>
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" name="save_course" class="btn theme-btn">💾 Save</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">❌ Cancel</button>
                 </div>
             </form>
         </div>
@@ -148,7 +186,6 @@ $result = $conn->query("SELECT * FROM courses ORDER BY id DESC");
         new bootstrap.Modal(document.getElementById('courseModal')).show();
     }
 
-    // Simple search filter
     document.getElementById('searchInput').addEventListener('input', function () {
         const value = this.value.toLowerCase();
         const rows = document.querySelectorAll('#coursesTable tbody tr');

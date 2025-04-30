@@ -1,16 +1,229 @@
-<html>
-    <head>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Finance Management System</title>
     <link rel="stylesheet" href="assets/css/style.css">
-    <title>FinanceManagementSystem</title>
-    </head>
-    <body>
+</head>
+
+
+
+
+
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #f4f4f4;
+      color: #333;
+    }
+
+    header {
+      background-color: maroon;
+      color: white;
+      padding: 10px 0;
+    }
+
+    .top-bar {
+      display: flex;
+      justify-content: space-between;
+      padding: 0 10%;
+      font-size: 14px;
+    }
+
+    .top-bar div {
+      padding: 5px 0;
+    }
+
+
+
+    .hero {
+    
+     background: url("assets/images/fimage.jpg") no-repeat center center/cover;
+      height: 90vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      text-align: center;
+      flex-direction: column;
+    }
+
+    .hero h1 {
+      font-size: 48px;
+      margin-bottom: 10px;
+      text-shadow: maroon;
+    }
+
+    .hero p {
+      font-size: 18px;
+      margin-bottom: 20px;
+      text-shadow: maroon;
+    }
+
+    .hero .btn a:hover {
+      padding: 12px 24px;
+      background-color:maroon;
+      color: white;
+      border: none;
+      text-decoration: none;
+      margin: 0 10px;
+      border-radius: 5px;
+    }
+
+    .hero.btn.hover{
+        color:yellow;
+    }
+
+    .features {
+      display: flex;
+      justify-content: space-around;
+      background-color: #ffffff;
+      padding: 50px 10%;
+      flex-wrap: wrap;
+    }
+
+    .feature-box {
+      width: 30%;
+      background-color: #f9f9f9;
+      padding: 25px;
+      border-radius: 8px;
+      margin: 15px 0;
+      box-shadow: maroon;
+    }
+
+    .feature-box h3 {
+      color: maroon;
+      margin-bottom: 10px;
+    }
+
+    .about {
+      display: flex;
+      padding: 60px 10%;
+      background-color: #f1f1f1;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .about-image {
+      flex: 1;
+      text-align: center;
+    }
+
+    .about-image img {
+      max-width: 100%;
+      border-radius: 10px;
+    }
+
+    .about-text {
+      flex: 1;
+      padding: 0 30px;
+    }
+
+    .about-text h2 {
+      color: maroon;
+      margin-bottom: 15px;
+    }
+
+    .about-text p {
+      font-size: 17px;
+      margin-bottom: 20px;
+    }
+
+   
+
+    @media (max-width: 768px) {
+      nav {
+        flex-direction: column;
+      }
+
+      .hero h1 {
+        font-size: 32px;
+      }
+
+      .features .feature-box {
+        width: 100%;
+      }
+
+      .about {
+        flex-direction: column;
+
+      }
+
+      .about-text {
+        padding: 20px 0;
+      }
+
+    
+  .about-image img {
+  max-width: 100%;
+  border-radius: 10px;
+}
+
+  
+}
+
+
+  </style>
+</head>
+<body>
+    
     <?php include 'includes/navbar.php'; ?>
-    <h1><span style="display: block; text-align: center;">Welcome to Institute of Engineering Studies</span></h1>
-    <div class="button-container">
-    <div class="button-container">
-    <a href="pages/login.php" class="btn">Login</a>
-    <a href="pages/register.php" class="btn">Register</a>
+
+
+
+
+
+ 
+       
+
+  <section class="hero">
+    <h1>Finance Management Made Easy</h1>
+    <p>Empowering IES Campus with secure, accurate, and efficient financial systems.</p>
+    <div>
+              <a href="pages/login.php" class="btn">Login</a>
+              <a href="pages/register.php" class="btn">Register</a>
+                 <div class="button-container">
+</div>
+</div>
+
+    
+  </section>
+
+  <section class="features">
+    <div class="feature-box">
+      <h3>Budget Allocation</h3>
+      <p>Plan and distribute financial resources across campus departments efficiently.</p>
     </div>
+    <div class="feature-box">
+      <h3>Transaction Records</h3>
+      <p>Track all financial transactions securely with transparency and audit readiness.</p>
+    </div>
+    <div class="feature-box">
+      <h3>Financial Reports</h3>
+      <p>Generate automated reports for better decision making and compliance.</p>
+    </div>
+  </section>
+
+  <section class="about">
+    <div class="about-image">
+      <img src="assets/images/home.jpg">
+    </div>
+    <div class="about-text">
+      <h2>About IES Campus Finance System</h2>
+      <p>The IES Finance Management System is developed to streamline and digitize the financial activities of the campus, ensuring accurate tracking, budgeting, and reporting.</p>
+      <p>It helps administrators, staff, and finance teams to collaborate more effectively while maintaining transparency and control over financial resources.</p>
+      
+    </div>
+  </section>
+
+
+
+</body>
+</html>
+
+
+
     <?php include 'includes/footer.php'; ?>
-    </body>
+</body>
 </html>

@@ -224,11 +224,11 @@ if ($_SESSION['role'] !== 'admin') {
                 height: auto;
                 position: relative;
             }
-            
+
             .main-content {
                 margin-left: 0;
             }
-            
+
             .cards-container {
                 grid-template-columns: 1fr;
             }
@@ -262,12 +262,7 @@ if ($_SESSION['role'] !== 'admin') {
                         Manage Students
                     </a>
                 </li>
-                <li class="nav-item">
-                    <a href="manage-settings.php" class="nav-link">
-                        <i class="fas fa-cog"></i>
-                        Settings
-                    </a>
-                </li>
+                <!-- Removed Settings Link -->
             </ul>
         </div>
 
