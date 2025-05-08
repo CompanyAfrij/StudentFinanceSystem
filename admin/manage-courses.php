@@ -130,8 +130,8 @@ $result = $conn->query("SELECT * FROM courses ORDER BY id ASC");
                 <td><?= htmlspecialchars($row['duration']) ?></td>
                 <td><?= number_format($row['price'], 2) ?></td>
                 <td class="text-nowrap">
-                    <button class="btn btn-sm btn-edit me-1" onclick='editCourse(<?= json_encode($row) ?>)'>✏️ Edit</button>
-                    <a class="btn btn-sm btn-danger" href="?delete_id=<?= $row['id'] ?>" onclick="return confirm('Delete this course?')">🗑️ Delete</a>
+                    <button class="btn btn-sm btn-edit me-1" onclick='editCourse(<?= json_encode($row) ?>)'> Edit</button>
+                    <a class="btn btn-sm btn-danger" href="?delete_id=<?= $row['id'] ?>" onclick="return confirm('Delete this course?')"> Delete</a>
                 </td>
             </tr>
         <?php endwhile; ?>

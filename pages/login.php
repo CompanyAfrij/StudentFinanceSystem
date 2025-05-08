@@ -48,7 +48,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 }
 ?>
 
-<!-- HTML PART -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -64,77 +63,30 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         body {
             margin: 0;
             height: 100vh;
-            background: radial-gradient(ellipse at bottom, #800000 0%, #2c003e 100%);
-            overflow: hidden;
+            background: url('../assets/images/ies.webp') no-repeat center center fixed;
+            background-size: cover;
             display: flex;
             justify-content: center;
             align-items: center;
         }
 
-        .background-blobs {
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            overflow: hidden;
-            z-index: 0;
-        }
-
-        .blob {
-            position: absolute;
-            border-radius: 50%;
-            filter: blur(80px);
-            opacity: 0.4;
-            animation: floatBlobs 20s infinite ease-in-out alternate;
-        }
-
-        .blob:nth-child(1) {
-            width: 300px;
-            height: 300px;
-            background: #ff6b6b;
-            top: 10%;
-            left: 10%;
-            animation-delay: 0s;
-        }
-
-        .blob:nth-child(2) {
-            width: 400px;
-            height: 400px;
-            background: #ffb347;
-            top: 30%;
-            right: 15%;
-            animation-delay: 3s;
-        }
-
-        .blob:nth-child(3) {
-            width: 250px;
-            height: 250px;
-            background: #6a5acd;
-            bottom: 15%;
-            left: 20%;
-            animation-delay: 6s;
-        }
-
-        @keyframes floatBlobs {
-            0% { transform: translateY(0px) translateX(0px); }
-            100% { transform: translateY(-50px) translateX(50px); }
-        }
-
         .login-container {
-            position: relative;
-            z-index: 1;
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
+            background: rgba(128, 0, 0, 0.7); /* Maroon (#800000) with 70% opacity */
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
             border-radius: 16px;
             padding: 40px;
             width: 360px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
         }
 
         h2 {
             text-align: center;
             margin-bottom: 25px;
             color: #fff;
+            font-size: 24px;
+            letter-spacing: 1px;
         }
 
         .input-group {
@@ -145,21 +97,28 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             display: block;
             font-size: 14px;
             color: #fff;
-            margin-bottom: 5px;
+            margin-bottom: 8px;
+            font-weight: 500;
         }
 
         input {
             width: 100%;
-            padding: 12px;
+            padding: 12px 15px;
             border: none;
             border-radius: 8px;
             font-size: 15px;
             outline: none;
+            background-color: rgba(255, 255, 255, 0.9);
+            transition: all 0.3s ease;
+        }
+
+        input:focus {
+            box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.3);
         }
 
         .login-btn {
             width: 100%;
-            padding: 12px;
+            padding: 14px;
             background-color: #fff;
             color: #800000;
             border: none;
@@ -167,41 +126,29 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             font-size: 16px;
             font-weight: bold;
             cursor: pointer;
-            transition: background 0.3s;
+            transition: all 0.3s ease;
+            margin-top: 10px;
+            letter-spacing: 0.5px;
         }
 
         .login-btn:hover {
-            background-color: #ffd2d2;
-        }
-
-        .forgot-password {
-            display: block;
-            text-align: center;
-            margin-top: 15px;
-            font-size: 14px;
-            color: #fff;
-            text-decoration: none;
-        }
-
-        .forgot-password:hover {
-            text-decoration: underline;
+            background-color: #f0f0f0;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
         }
 
         .error-message {
-            color: #ff4d4d;
+            color: #ffcccc;
             font-size: 14px;
             text-align: center;
             margin-top: 15px;
+            padding: 10px;
+            background-color: rgba(255, 0, 0, 0.2);
+            border-radius: 5px;
         }
     </style>
 </head>
 <body>
-    <div class="background-blobs">
-        <div class="blob"></div>
-        <div class="blob"></div>
-        <div class="blob"></div>
-    </div>
-
     <div class="login-container">
         <h2>Login to IES</h2>
         <form action="login.php" method="POST">
@@ -213,8 +160,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 <label for="password">Password</label>
                 <input type="password" id="password" name="password" placeholder="" required>
             </div>
-            <button type="submit" class="login-btn">Login</button>
-            <a href="forgot-password.php" class="forgot-password">Forgot Password?</a>
+            <button type="submit" class="login-btn">LOGIN</button>
         </form>
         <?php if (isset($error)): ?>
             <p class="error-message"><?php echo htmlspecialchars($error); ?></p>

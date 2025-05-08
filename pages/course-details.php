@@ -45,29 +45,29 @@ $course_fee = max(0, $total_amount - ($registration_fee + $certificate_fee));
 
         .card {
             background-color: #fff;
-            padding: 30px;
-            max-width: 500px;
-            width: 90%;
-            border-radius: 15px;
-            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+            padding: 40px;
+            max-width: 600px; /* Increased card size */
+            width: 95%;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
             transition: transform 0.3s ease;
         }
 
         .card:hover {
-            transform: scale(1.02);
+            transform: scale(1.03);
         }
 
         .card h2 {
-            margin-bottom: 10px;
-            font-size: 26px;
+            margin-bottom: 15px;
+            font-size: 30px; /* Larger heading */
             color: #343a40;
         }
 
         .card p {
-            font-size: 16px;
+            font-size: 18px; /* Slightly larger text */
             color: #555;
-            line-height: 1.6;
-            margin: 8px 0;
+            line-height: 1.8;
+            margin: 10px 0;
         }
 
         .card p strong {
@@ -75,23 +75,47 @@ $course_fee = max(0, $total_amount - ($registration_fee + $certificate_fee));
         }
 
         .price-row {
-            background-color: #f1f1f1;
-            padding: 10px 15px;
-            border-radius: 8px;
-            margin-top: 15px;
+            background-color: #f8f9fa; /* Lighter background for clarity */
+            padding: 15px 20px;
+            border-radius: 10px;
+            margin: 10px 0; /* Increased spacing between rows */
             text-align: left;
+            border: 1px solid #e0e0e0; /* Subtle border for separation */
+            display: flex;
+            justify-content: space-between; /* Align amounts to the right */
+            align-items: center;
+        }
+
+        .price-row strong {
+            font-weight: 600;
+            color: #2c3e50; /* Darker color for emphasis */
+        }
+
+        .price-row span {
+            font-size: 18px;
+            color: #800000; /* Maroon for amounts */
+            font-weight: 500;
+        }
+
+        .total-row {
+            background-color: #e9ecef; /* Distinct background for total */
+            font-weight: bold;
+            padding: 20px;
+            margin-top: 20px;
+            border-radius: 12px;
+            border: 1px solid #d0d0d0;
         }
 
         .btn {
             background-color: #800000;
             color: #fff;
-            padding: 12px 25px;
+            padding: 15px 30px; /* Larger button */
             border: none;
-            border-radius: 8px;
-            font-size: 16px;
+            border-radius: 10px;
+            font-size: 18px;
             text-decoration: none;
             display: inline-block;
-            margin-top: 20px;
+            margin-top: 25px;
             transition: background-color 0.3s ease;
         }
 
@@ -101,10 +125,22 @@ $course_fee = max(0, $total_amount - ($registration_fee + $certificate_fee));
 
         @media screen and (max-width: 600px) {
             .card {
-                padding: 20px;
+                padding: 25px;
+                max-width: 90%;
             }
             .card h2 {
-                font-size: 22px;
+                font-size: 24px;
+            }
+            .card p {
+                font-size: 16px;
+            }
+            .price-row {
+                padding: 12px 15px;
+                font-size: 16px;
+            }
+            .btn {
+                padding: 12px 20px;
+                font-size: 16px;
             }
         }
     </style>
@@ -116,11 +152,20 @@ $course_fee = max(0, $total_amount - ($registration_fee + $certificate_fee));
         <p><strong>Description:</strong> <?= nl2br(htmlspecialchars($course['description'])) ?></p>
 
         <div class="price-row">
-            
-            <p><strong>Registration Fee:</strong> Rs<?= number_format($registration_fee, 2) ?></p>
-            <p><strong>Certificate Fee:</strong> Rs<?= number_format($certificate_fee, 2) ?></p>
-            <p><strong>Course Fee:</strong> Rs<?= number_format($course_fee, 2) ?></p>
-            <p><strong>Total Amount:</strong> Rs<?= number_format($total_amount, 2) ?></p>
+            <strong>Registration Fee:</strong>
+            <span>Rs<?= number_format($registration_fee, 2) ?></span>
+        </div>
+        <div class="price-row">
+            <strong>Certificate Fee:</strong>
+            <span>Rs<?= number_format($certificate_fee, 2) ?></span>
+        </div>
+        <div class="price-row">
+            <strong>Course Fee:</strong>
+            <span>Rs<?= number_format($course_fee, 2) ?></span>
+        </div>
+        <div class="price-row total-row">
+            <strong>Total Amount:</strong>
+            <span>Rs<?= number_format($total_amount, 2) ?></span>
         </div>
 
         <a href="payment.php?course_id=<?= htmlspecialchars($course['id']) ?>" class="btn">Pay Now</a>

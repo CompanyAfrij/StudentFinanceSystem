@@ -1,0 +1,36 @@
+# Enable URL rewriting
+RewriteEngine On
+RewriteBase /
+
+# Redirect www to non-www (optional)
+RewriteCond %{HTTP_HOST} ^www\.(.*)$ [NC]
+RewriteRule ^(.*)$ http://%1/$1 [R=301,L]
+
+# Prevent access to sensitive files
+<FilesMatch "\.(env|htaccess|ini|log|sh|sql|bak|gitignore)$">
+  Order allow,deny
+  Deny from all
+</FilesMatch>
+
+# Disable directory browsing
+Options -Indexes
+
+# Hide server version
+ServerSignature Off
+
+# Set default landing file
+DirectoryIndex index.php
+
+# Security headers
+<IfModule mod_headers.c>
+  Header set X-Content-Type-Options "nosniff"
+  Header set X-Frame-Options "SAMEORIGIN"
+  Header set X-XSS-Protection "1; mode=block"
+</IfModule>
+
+# Clean URLs example (optional)
+# RewriteRule ^course/([0-9]+)$ course.php?id=$1 [L,QSA]
+
+# Custom error pages (optional)
+# ErrorDocument 404 /404.html
+# ErrorDocument 403 /403.html

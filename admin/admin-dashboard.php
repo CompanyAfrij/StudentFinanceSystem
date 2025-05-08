@@ -1,315 +1,334 @@
 <?php
 session_start();
-include '../includes/database.php'; // Ensure database connection
+include '../includes/database.php';
 
-// Debugging session issues
-if (!isset($_SESSION['role'])) {
-    echo "<pre>";
-    print_r($_SESSION);
-    echo "</pre>";
-    exit("Session not set. Check your login system.");
-}
-
-// Ensure only admin access
-if ($_SESSION['role'] !== 'admin') {
+if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
     header("Location: ../pages/login.php");
     exit();
 }
-?>
 
+$courseCount = $studentCount = $adminCount = $totalBalance = 0;
+
+$courseResult = mysqli_query($conn, "SELECT COUNT(*) AS total FROM courses");
+if ($courseResult) $courseCount = mysqli_fetch_assoc($courseResult)['total'];
+
+$studentResult = mysqli_query($conn, "SELECT COUNT(*) AS total FROM users WHERE role = 'student'");
+if ($studentResult) $studentCount = mysqli_fetch_assoc($studentResult)['total'];
+
+$adminResult = mysqli_query($conn, "SELECT COUNT(*) AS total FROM users WHERE role = 'admin'");
+if ($adminResult) $adminCount = mysqli_fetch_assoc($adminResult)['total'];
+
+$balanceResult = mysqli_query($conn, "SELECT SUM(paid_amount) AS total_balance FROM enrollments");
+if ($balanceResult) $totalBalance = mysqli_fetch_assoc($balanceResult)['total_balance'] ?? 0;
+
+if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['reply'], $_POST['message_id'])) {
+    $reply = $_POST['reply'];
+    $message_id = $_POST['message_id'];
+
+    $stmt = $conn->prepare("UPDATE messages SET reply = ?, replied_at = NOW() WHERE id = ?");
+    $stmt->bind_param("si", $reply, $message_id);
+    $stmt->execute();
+    $stmt->close();
+
+    echo "<script>alert('Reply sent successfully!'); window.location.href='admin-dashboard.php';</script>";
+    exit();
+}
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Dashboard</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
             --primary-color: #800000;
-            --primary-hover: #a00;
-            --secondary-color: #2c3e50;
-            --light-color: #f8f9fa;
-            --dark-color: #343a40;
-            --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            --transition: all 0.3s ease;
-        }
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+            --primary-hover: #a00000;
+            --accent-color: #ffc107;
+            --light: #fff;
+            --gray-light: #f5f5f5;
+            --dark-bg: #121212;
+            --dark-text: #e0e0e0;
+            --shadow: 0 4px 8px rgba(0,0,0,0.1);
+            --transition: all 0.3s ease-in-out;
         }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f5f7fa;
+            font-family: 'Segoe UI', sans-serif;
+            margin: 0;
+            background-color: var(--gray-light);
             color: #333;
-            line-height: 1.6;
-        }
-
-        .dashboard {
-            display: flex;
-            min-height: 100vh;
-        }
-
-        .sidebar {
-            width: 250px;
-            background: var(--secondary-color);
-            color: white;
-            padding: 20px 0;
-            box-shadow: var(--shadow);
-            position: fixed;
-            height: 100%;
-        }
-
-        .sidebar-header {
-            padding: 0 20px 20px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-            margin-bottom: 20px;
-        }
-
-        .sidebar-header h3 {
-            color: white;
-            font-size: 1.5rem;
-            margin-bottom: 5px;
-        }
-
-        .sidebar-header p {
-            color: #b3b3b3;
-            font-size: 0.9rem;
-        }
-
-        .nav-menu {
-            list-style: none;
-        }
-
-        .nav-item {
-            margin-bottom: 5px;
-        }
-
-        .nav-link {
-            display: flex;
-            align-items: center;
-            padding: 12px 20px;
-            color: #b3b3b3;
-            text-decoration: none;
             transition: var(--transition);
         }
 
-        .nav-link:hover, .nav-link.active {
-            background: rgba(255, 255, 255, 0.1);
-            color: white;
+        body.dark {
+            background-color: var(--dark-bg);
+            color: var(--dark-text);
         }
 
-        .nav-link i {
-            margin-right: 10px;
-            width: 20px;
-            text-align: center;
+        .dashboard { display: flex; min-height: 100vh; }
+
+        .sidebar {
+            width: 250px;
+            background-color: var(--primary-color);
+            color: white;
+            padding-top: 30px;
+            position: fixed;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
         }
+
+        .sidebar-header { text-align: center; margin-bottom: 30px; }
+        .nav-menu { list-style: none; padding: 0 20px; }
+        .nav-link {
+            display: flex;
+            align-items: center;
+            padding: 12px 15px;
+            margin: 8px 0;
+            color: #f1f1f1;
+            text-decoration: none;
+            border-radius: 4px;
+        }
+        .nav-link i { margin-right: 10px; }
+        .nav-link:hover, .nav-link.active { background-color: rgba(255, 255, 255, 0.2); }
 
         .main-content {
-            flex: 1;
             margin-left: 250px;
-            padding: 30px;
+            padding: 40px;
+            flex: 1;
         }
 
         .header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 30px;
-            padding-bottom: 15px;
-            border-bottom: 1px solid #e0e0e0;
         }
 
-        .header h1 {
-            color: var(--secondary-color);
-            font-size: 2rem;
-        }
-
-        .user-info {
-            display: flex;
-            align-items: center;
-        }
-
-        .user-info img {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            margin-right: 10px;
-        }
-
-        .logout-btn {
-            background: var(--primary-color);
-            color: white;
+        .dark-mode-toggle {
+            background: var(--accent-color);
+            color: black;
+            padding: 10px;
             border: none;
-            padding: 8px 15px;
-            border-radius: 4px;
+            width: calc(100% - 40px);
+            margin: 10px 20px;
+            border-radius: 25px;
             cursor: pointer;
-            transition: var(--transition);
-            display: flex;
-            align-items: center;
-        }
-
-        .logout-btn:hover {
-            background: var(--primary-hover);
-        }
-
-        .logout-btn i {
-            margin-right: 5px;
+            font-weight: bold;
         }
 
         .cards-container {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
             gap: 25px;
             margin-top: 20px;
         }
 
         .card {
-            background: white;
-            border-radius: 8px;
+            background-color: white;
+            border-radius: 10px;
             box-shadow: var(--shadow);
-            overflow: hidden;
+            padding: 20px;
             transition: var(--transition);
         }
 
-        .card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        body.dark .card {
+            background-color: #1e1e1e;
+            color: var(--dark-text);
         }
 
         .card-header {
-            background: var(--primary-color);
-            color: white;
-            padding: 15px;
+            font-size: 1.2rem;
+            margin-bottom: 10px;
             display: flex;
             align-items: center;
         }
 
         .card-header i {
-            font-size: 1.5rem;
-            margin-right: 15px;
-        }
-
-        .card-body {
-            padding: 20px;
+            margin-right: 10px;
+            color: var(--primary-color);
         }
 
         .card-body p {
-            color: #666;
-            margin-bottom: 20px;
+            margin-bottom: 10px;
         }
 
         .card-btn {
-            display: inline-block;
-            background: var(--primary-color);
-            color: white;
-            padding: 10px 20px;
-            border-radius: 4px;
+            background-color: var(--accent-color);
+            color: #000;
+            padding: 10px;
+            border-radius: 5px;
             text-decoration: none;
-            transition: var(--transition);
-            width: 100%;
+            display: block;
             text-align: center;
+            margin-top: 10px;
         }
 
-        .card-btn:hover {
-            background: var(--primary-hover);
+        .logout-btn {
+            background: #ff4b2b;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            margin: 20px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: bold;
+            width: calc(100% - 40px);
         }
 
-        @media (max-width: 768px) {
-            .sidebar {
-                width: 100%;
-                height: auto;
-                position: relative;
-            }
+        .messages-section {
+            margin-top: 50px;
+        }
 
-            .main-content {
-                margin-left: 0;
-            }
+        .message-box {
+            background-color: #fff;
+            border: 1px solid #ccc;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+        }
 
-            .cards-container {
-                grid-template-columns: 1fr;
-            }
+        .message-box textarea {
+            width: 100%;
+            padding: 8px;
+            margin-top: 10px;
+        }
+
+        .message-box button {
+            margin-top: 10px;
+            padding: 8px 15px;
+            background-color: var(--primary-color);
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        body.dark .message-box {
+            background-color: #1e1e1e;
+            border-color: #555;
         }
     </style>
 </head>
 <body>
-    <div class="dashboard">
-        <!-- Sidebar -->
-        <div class="sidebar">
+
+<div class="dashboard">
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <div>
             <div class="sidebar-header">
-                <h3>Admin Dashboard</h3>
-                <p>Welcome back, Admin</p>
+                <h3>Admin Panel</h3>
+                <p>Welcome, Admin</p>
             </div>
             <ul class="nav-menu">
-                <li class="nav-item">
-                    <a href="#" class="nav-link active">
-                        <i class="fas fa-tachometer-alt"></i>
-                        Dashboard
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="manage-courses.php" class="nav-link">
-                        <i class="fas fa-book"></i>
-                        Manage Courses
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="manage-students.php" class="nav-link">
-                        <i class="fas fa-users"></i>
-                        Manage Students
-                    </a>
-                </li>
-                <!-- Removed Settings Link -->
+                <li><a href="#" class="nav-link active"><i class="fas fa-home"></i> Dashboard</a></li>
+                <li><a href="manage-students.php" class="nav-link"><i class="fas fa-users"></i> Manage Students</a></li>
+                <li><a href="manage-courses.php" class="nav-link"><i class="fas fa-book"></i> Manage Courses</a></li>
+                <li><a href="student-payments.php" class="nav-link"><i class="fas fa-money-bill"></i> Student Payments</a></li>
+                <li><a href="messages.php" class="nav-link"><i class="fas fa-envelope"></i> Messages</a></li>
             </ul>
         </div>
+        <div>
+            <button class="dark-mode-toggle" onclick="toggleDarkMode()"><i class="fas fa-moon"></i> Dark Mode</button>
+            <button class="logout-btn" onclick="confirmLogout()"><i class="fas fa-sign-out-alt"></i> Logout</button>
+        </div>
+    </div>
 
-        <!-- Main Content -->
-        <div class="main-content">
-            <div class="header">
-                <h1>Dashboard Overview</h1>
-                <button class="logout-btn" onclick="window.location.href='../pages/logout.php'">
-                    <i class="fas fa-sign-out-alt"></i> Logout
-                </button>
+    <!-- Main Content -->
+    <div class="main-content">
+        <div class="header">
+            <h1 id="greeting">Dashboard Overview</h1>
+        </div>
+
+        <div class="cards-container">
+            <div class="card">
+                <div class="card-header"><i class="fas fa-user-graduate"></i> Total Students</div>
+                <div class="card-body">
+                    <p><?php echo $studentCount; ?> students registered</p>
+                    <a href="manage-students.php" class="card-btn">View Students</a>
+                </div>
             </div>
 
-            <div class="cards-container">
-                <div class="card">
-                    <div class="card-header">
-                        <i class="fas fa-book"></i>
-                        <h3>Manage Courses</h3>
-                    </div>
-                    <div class="card-body">
-                        <p>Add, modify, or delete courses in the system. Manage course content, schedules, and instructors.</p>
-                        <a href="manage-courses.php" class="card-btn">Go to Courses</a>
-                    </div>
+            <div class="card">
+                <div class="card-header"><i class="fas fa-book-open"></i> Total Courses</div>
+                <div class="card-body">
+                    <p><?php echo $courseCount; ?> courses available</p>
+                    <a href="manage-courses.php" class="card-btn">Manage Courses</a>
                 </div>
+            </div>
 
-                <div class="card">
-                    <div class="card-header">
-                        <i class="fas fa-users"></i>
-                        <h3>Manage Students</h3>
-                    </div>
-                    <div class="card-body">
-                        <p>View and manage student records, enrollments, and academic progress.</p>
-                        <a href="manage-students.php" class="card-btn">Go to Students</a>
-                    </div>
+            <div class="card">
+                <div class="card-header"><i class="fas fa-user-shield"></i> Total Admins</div>
+                <div class="card-body">
+                    <p><?php echo $adminCount; ?> admins managing</p>
                 </div>
+            </div>
 
-                <div class="card">
-                    <div class="card-header">
-                        <i class="fas fa-cog"></i>
-                        <h3>System Settings</h3>
-                    </div>
-                    <div class="card-body">
-                        <p>Configure system preferences, user permissions, and application settings.</p>
-                        <a href="manage-settings.php" class="card-btn">Go to Settings</a>
-                    </div>
+            <div class="card">
+                <div class="card-header"><i class="fas fa-wallet"></i> Total Balance</div>
+                <div class="card-body">
+                    <p>LKR <?php echo number_format($totalBalance, 2); ?> credited</p>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header"><i class="fas fa-envelope"></i> Messages</div>
+                <div class="card-body">
+                    <p>View and respond to student queries</p>
+                    <a href="messages.php" class="card-btn">Go to Messages</a>
                 </div>
             </div>
         </div>
+
+        <!-- Student Messages Section -->
+        <div class="messages-section">
+            <h2>Student Messages</h2>
+            <?php
+            $result = $conn->query("SELECT * FROM messages ORDER BY sent_at DESC");
+            while ($row = $result->fetch_assoc()) {
+                echo "<div class='message-box'>";
+                echo "<strong>Email:</strong> " . htmlspecialchars($row['student_email']) . "<br>";
+                echo "<strong>Message:</strong> " . nl2br(htmlspecialchars($row['message'])) . "<br>";
+                echo "<strong>Reply:</strong> " . (isset($row['reply']) && $row['reply'] ? nl2br(htmlspecialchars($row['reply'])) : "<em>No reply yet</em>") . "<br>";
+
+                if (!isset($row['reply']) || !$row['reply']) {
+                    echo "<form method='post'>
+                            <input type='hidden' name='message_id' value='" . $row['id'] . "'>
+                            <textarea name='reply' placeholder='Write a reply...' required></textarea>
+                            <button type='submit'>Send Reply</button>
+                          </form>";
+                }
+                echo "</div>";
+            }
+            ?>
+        </div>
     </div>
+</div>
+
+<script>
+    function toggleDarkMode() {
+        document.body.classList.toggle('dark');
+        localStorage.setItem('theme', document.body.classList.contains('dark') ? 'dark' : 'light');
+    }
+
+    function confirmLogout() {
+        if (confirm("Are you sure you want to log out?")) {
+            window.location.href = '../pages/logout.php';
+        }
+    }
+
+    if (localStorage.getItem('theme') === 'dark') {
+        document.body.classList.add('dark');
+    }
+
+    const hour = new Date().getHours();
+    let greetingText = "Dashboard Overview";
+    if (hour < 12) greetingText = "Good Morning, Admin!";
+    else if (hour < 18) greetingText = "Good Afternoon, Admin!";
+    else greetingText = "Good Evening, Admin!";
+    document.getElementById("greeting").textContent = greetingText;
+</script>
+
 </body>
 </html>

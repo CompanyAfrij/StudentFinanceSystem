@@ -2,7 +2,6 @@
 session_start();
 include '../includes/config.php';
 
-// Ensure only student access
 if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'student') {
     header("Location: ../pages/login.php");
     exit();
@@ -10,17 +9,15 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'student') {
 
 $student_id = $_SESSION['user_id'];
 
-// Get student name
-$stmt = $conn->prepare("SELECT name FROM users WHERE id = ?");
+$stmt = $conn->prepare("SELECT name, email FROM users WHERE id = ?");
 $stmt->bind_param("i", $student_id);
 $stmt->execute();
-$stmt->bind_result($student_name);
+$stmt->bind_result($student_name, $student_email);
 $stmt->fetch();
 $stmt->close();
 
-// Get all enrollments and course info
 $query = "
-    SELECT e.id AS enrollment_id, c.course_name, c.price AS total_fee, e.paid_amount, e.enrolled_at
+    SELECT e.id AS enrollment_id, c.course_name, c.duration, c.price AS total_fee, e.paid_amount, e.enrolled_at
     FROM enrollments e
     JOIN courses c ON e.course_id = c.id
     WHERE e.student_id = ?
@@ -43,169 +40,512 @@ $stmt2->close();
 <head>
     <meta charset="UTF-8">
     <title>Student Dashboard</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
+        :root {
+            --primary-color: #800000;
+            --primary-hover: #a00000;
+            --accent-color: #ffc107;
+            --light: #fff;
+            --gray-light: #f5f5f5;
+            --dark-bg: #121212;
+            --dark-text: #e0e0e0;
+            --shadow: 0 4px 8px rgba(0,0,0,0.1);
+            --transition: all 0.3s ease-in-out;
+        }
+
         body {
             font-family: 'Segoe UI', sans-serif;
-            background-color: #f4f4f4;
             margin: 0;
-            padding: 20px;
-        }
-        .header {
-            background-color: #800000;
-            color: white;
-            padding: 20px;
-            text-align: center;
-        }
-        .header a.logout {
-            float: right;
-            color: white;
-            text-decoration: none;
-            margin-right: 20px;
-            font-weight: bold;
-        }
-        .container {
-            max-width: 1000px;
-            margin: 40px auto;
-            background: #fff;
-            padding: 25px;
-            border-radius: 10px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-        }
-        h2, h3, h4 {
+            background-color: var(--gray-light);
             color: #333;
+            transition: var(--transition);
         }
+
+        body.dark {
+            background-color: var(--dark-bg);
+            color: var(--dark-text);
+        }
+
+        .dashboard { display: flex; min-height: 100vh; }
+
+        .sidebar {
+            width: 250px;
+            background-color: var(--primary-color);
+            color: white;
+            padding-top: 30px;
+            position: fixed;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .sidebar-header { text-align: center; margin-bottom: 30px; }
+        .nav-menu { list-style: none; padding: 0 20px; }
+        .nav-link {
+            display: flex;
+            align-items: center;
+            padding: 12px 15px;
+            margin: 8px 0;
+            color: #f1f1f1;
+            text-decoration: none;
+            border-radius: 4px;
+            transition: var(--transition);
+        }
+        .nav-link i { margin-right: 10px; }
+        .nav-link:hover, .nav-link.active { 
+            background-color: rgba(255, 255, 255, 0.2);
+            transform: translateX(5px);
+        }
+
+        .main-content {
+            margin-left: 250px;
+            padding: 40px;
+            flex: 1;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        .dark-mode-toggle {
+            background: var(--accent-color);
+            color: black;
+            padding: 10px;
+            border: none;
+            width: calc(100% - 40px);
+            margin: 10px 20px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: var(--transition);
+        }
+
+        .dark-mode-toggle:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+
+        .cards-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 25px;
+            margin-top: 20px;
+        }
+
+        .card {
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: var(--shadow);
+            padding: 20px;
+            transition: var(--transition);
+        }
+
+        body.dark .card {
+            background-color: #1e1e1e;
+            color: var(--dark-text);
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+        }
+
+        .card-header {
+            font-size: 1.2rem;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+        }
+
+        .card-header i {
+            margin-right: 10px;
+            color: var(--primary-color);
+        }
+
+        .card-body p {
+            margin-bottom: 10px;
+        }
+
+        .card-btn {
+            background-color: var(--accent-color);
+            color: #000;
+            padding: 10px;
+            border-radius: 5px;
+            text-decoration: none;
+            display: block;
+            text-align: center;
+            margin-top: 10px;
+            transition: var(--transition);
+        }
+
+        .card-btn:hover {
+            background-color: #ffab00;
+            transform: translateY(-2px);
+        }
+
+        .logout-btn {
+            background: #ff4b2b;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            margin: 20px;
+            width: calc(100% - 40px);
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: var(--transition);
+        }
+
+        .logout-btn:hover {
+            background: #ff5e3a;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+
+        .profile-info {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .profile-pic {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background-color: var(--primary-color);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            margin-right: 20px;
+        }
+
+        .welcome-message {
+            font-size: 1.5rem;
+            margin-bottom: 5px;
+        }
+
+        .email {
+            color: #777;
+        }
+
+        body.dark .email {
+            color: #aaa;
+        }
+
         table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 25px;
+            margin-top: 20px;
+            background-color: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: var(--shadow);
         }
+
+        body.dark table {
+            background-color: #1e1e1e;
+        }
+
         th, td {
-            padding: 12px 16px;
-            border-bottom: 1px solid #ccc;
+            padding: 12px 15px;
             text-align: left;
+            border-bottom: 1px solid #ddd;
         }
+
+        body.dark th, body.dark td {
+            border-bottom: 1px solid #444;
+        }
+
         th {
-            background-color: #f2f2f2;
-            color: #800000;
+            background-color: var(--primary-color);
+            color: white;
         }
+
+        body.dark th {
+            background-color: #600000;
+        }
+
         tr:hover {
-            background-color: #f9f9f9;
+            background-color: #f5f5f5;
         }
-        .balance {
-            font-weight: bold;
-            color: red;
+
+        body.dark tr:hover {
+            background-color: #2a2a2a;
         }
+
         .paid {
+            color: #44aa44;
             font-weight: bold;
-            color: green;
         }
+
+        .balance {
+            color: #ff4444;
+            font-weight: bold;
+        }
+
         .installment-table {
-            margin-top: 10px;
-            margin-bottom: 40px;
-            border: 1px solid #ccc;
+            margin-top: 30px;
         }
-        .installment-table th, .installment-table td {
-            padding: 10px;
-            border: 1px solid #ddd;
-        }
-        .installment-table th {
-            background-color: #fefefe;
-            color: #800000;
-        }
-        button {
-            padding: 6px 12px;
-            background-color: #800000;
+
+        .installment-table form button {
+            padding: 8px 16px;
+            background-color: var(--primary-color);
             color: white;
             border: none;
-            border-radius: 4px;
+            border-radius: 6px;
             cursor: pointer;
+            font-weight: 500;
+            transition: var(--transition);
         }
-        button:hover {
-            background-color: #a00000;
+
+        .installment-table form button:hover {
+            background-color: var(--primary-hover);
+            transform: translateY(-2px);
+        }
+
+        .no-courses {
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            box-shadow: var(--shadow);
+        }
+
+        body.dark .no-courses {
+            background-color: #1e1e1e;
         }
     </style>
 </head>
 <body>
 
-<div class="header">
-    <a href="../pages/logout.php" class="logout">Logout</a>
-    <h1>Student Dashboard</h1>
-</div>
+<div class="dashboard">
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <div>
+            <div class="sidebar-header">
+                <h3>Student Portal</h3>
+                <p>Welcome, <?= htmlspecialchars($student_name) ?></p>
+            </div>
+            <ul class="nav-menu">
+                <li><a href="#" class="nav-link active"><i class="fas fa-home"></i> Dashboard</a></li>
+                <li><a href="courses.php" class="nav-link"><i class="fas fa-book"></i> Browse Courses</a></li>
+                <li><a href="contact.php" class="nav-link"><i class="fas fa-envelope"></i> Contact Us</a></li>
+            </ul>
+        </div>
+        <div>
+            <button class="dark-mode-toggle" onclick="toggleDarkMode()"><i class="fas fa-moon"></i> Dark Mode</button>
+            <button class="logout-btn" onclick="confirmLogout()"><i class="fas fa-sign-out-alt"></i> Logout</button>
+        </div>
+    </div>
 
-<div class="container">
-    <h2>Welcome, <?= htmlspecialchars($student_name) ?></h2>
+    <!-- Main Content -->
+    <div class="main-content">
+        <div class="header">
+            <h1 id="greeting">Dashboard Overview</h1>
+        </div>
 
-    <?php if (count($enrollments)): ?>
-        <?php foreach ($enrollments as $enroll): 
-            $balance = $enroll['total_fee'] - $enroll['paid_amount'];
-        ?>
-            <h3><?= htmlspecialchars($enroll['course_name']) ?></h3>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Total Fee (Rs)</th>
-                        <th>Paid Amount (Rs)</th>
-                        <th>Balance (Rs)</th>
-                        <th>Enrolled At</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td><?= number_format($enroll['total_fee'], 2) ?></td>
-                        <td class="paid"><?= number_format($enroll['paid_amount'], 2) ?></td>
-                        <td class="balance"><?= number_format($balance, 2) ?></td>
-                        <td><?= date('d M Y', strtotime($enroll['enrolled_at'])) ?></td>
-                    </tr>
-                </tbody>
-            </table>
+        <div class="profile-info">
+            <div class="profile-pic">
+                <?= strtoupper(substr($student_name, 0, 1)) ?>
+            </div>
+            <div>
+                <div class="welcome-message">Welcome back, <?= htmlspecialchars($student_name) ?>!</div>
+                <div class="email"><?= htmlspecialchars($student_email) ?></div>
+            </div>
+        </div>
 
-            <?php
-            $enrollment_id = $enroll['enrollment_id'];
-            $installments = $conn->prepare("SELECT id, installment_number, amount, due_date, paid FROM installments WHERE enrollment_id = ?");
-            $installments->bind_param("i", $enrollment_id);
-            $installments->execute();
-            $result = $installments->get_result();
+        <?php if (count($enrollments)): ?>
+            <?php 
+            $total_paid = 0;
+            $total_balance = 0;
+            foreach ($enrollments as $enroll) {
+                $total_paid += $enroll['paid_amount'];
+                $total_balance += ($enroll['total_fee'] - $enroll['paid_amount']);
+            }
             ?>
 
-            <?php if ($result->num_rows > 0): ?>
-                <h4>Installments</h4>
-                <table class="installment-table">
-                    <thead>
-                        <tr>
-                            <th>No.</th>
-                            <th>Amount</th>
-                            <th>Due Date</th>
-                            <th>Status</th>
-                            <th>Action</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                    <?php while ($row = $result->fetch_assoc()): ?>
-                        <tr>
-                            <td><?= $row['installment_number'] ?></td>
-                            <td><?= number_format($row['amount'], 2) ?></td>
-                            <td><?= htmlspecialchars($row['due_date']) ?></td>
-                            <td><?= $row['paid'] ? '<span class="paid">Paid</span>' : '<span class="balance">Unpaid</span>' ?></td>
-                            <td>
-                                <?php if (!$row['paid']): ?>
-                                    <form action="payment.php" method="GET" style="margin: 0;">
-                                        <input type="hidden" name="installment_id" value="<?= $row['id'] ?>">
-                                        <button type="submit">Pay</button>
-                                    </form>
-                                <?php else: ?>
-                                    <span class="paid">Paid</span>
-                                <?php endif; ?>
-                            </td>
-                        </tr>
-                    <?php endwhile; ?>
-                    </tbody>
-                </table>
-            <?php endif; ?>
-        <?php endforeach; ?>
-    <?php else: ?>
-        <p>You have not enrolled in any courses yet. <a href="courses.php">Browse Courses</a></p>
-    <?php endif; ?>
+            <div class="cards-container">
+                <div class="card">
+                    <div class="card-header"><i class="fas fa-book-open"></i> Enrolled Courses</div>
+                    <div class="card-body">
+                        <p><?= count($enrollments) ?> active courses</p>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header"><i class="fas fa-wallet"></i> Total Paid</div>
+                    <div class="card-body">
+                        <p>LKR <?= number_format($total_paid, 2) ?></p>
+                        <p class="paid">Payment received</p>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header"><i class="fas fa-money-bill-wave"></i> Total Balance</div>
+                    <div class="card-body">
+                        <p>LKR <?= number_format($total_balance, 2) ?></p>
+                        <p class="balance">Pending payment</p>
+                    </div>
+                </div>
+            </div>
+
+            <?php foreach ($enrollments as $enroll): 
+                $balance = $enroll['total_fee'] - $enroll['paid_amount'];
+            ?>
+                <div class="card" style="margin-top: 30px;">
+                    <div class="card-header"><i class="fas fa-graduation-cap"></i> <?= htmlspecialchars($enroll['course_name']) ?></div>
+                    <div class="card-body">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Total Fee (Rs)</th>
+                                    <th>Paid Amount (Rs)</th>
+                                    <th>Balance (Rs)</th>
+                                    <th>Enrolled At</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><?= number_format($enroll['total_fee'], 2) ?></td>
+                                    <td class="paid"><?= number_format($enroll['paid_amount'], 2) ?></td>
+                                    <td class="balance"><?= number_format($balance, 2) ?></td>
+                                    <td><?= date('d M Y', strtotime($enroll['enrolled_at'])) ?></td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <?php
+                        $enrollment_id = $enroll['enrollment_id'];
+                        $installments = $conn->prepare("SELECT id, installment_number, amount, due_date, paid FROM installments WHERE enrollment_id = ?");
+                        $installments->bind_param("i", $enrollment_id);
+                        $installments->execute();
+                        $result = $installments->get_result();
+                        ?>
+
+                        <?php if ($result->num_rows > 0): ?>
+                            <h4 style="margin-top: 20px;">Installments</h4>
+                            <table class="installment-table">
+                                <thead>
+                                    <tr>
+                                        <th>No.</th>
+                                        <th>Amount</th>
+                                        <th>Due Date</th>
+                                        <th>Status</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                <?php while ($row = $result->fetch_assoc()): ?>
+                                    <tr>
+                                        <td><?= $row['installment_number'] ?></td>
+                                        <td>LKR <?= number_format($row['amount'], 2) ?></td>
+                                        <td><?= date('d M Y', strtotime($row['due_date'])) ?></td>
+                                        <td><?= $row['paid'] ? '<span class="paid">Paid</span>' : '<span class="balance">Unpaid</span>' ?></td>
+                                        <td>
+                                            <?php if (!$row['paid']): ?>
+                                                <form action="payment.php" method="GET" style="margin: 0;" onsubmit="return confirmPayment();">
+                                                    <input type="hidden" name="installment_id" value="<?= $row['id'] ?>">
+                                                    <button type="submit">Pay Now</button>
+                                                </form>
+                                            <?php endif; ?>
+                                        </td>
+                                    </tr>
+                                <?php endwhile; ?>
+                                </tbody>
+                            </table>
+                        <?php endif; ?>
+                    </div>
+                </div>
+            <?php endforeach; ?>
+        <?php else: ?>
+            <div class="card no-courses">
+                <div class="card-body">
+                    <p>You have not enrolled in any courses yet.</p>
+                    <a href="courses.php" class="card-btn">Browse Available Courses</a>
+                </div>
+            </div>
+        <?php endif; ?>
+
+        <?php
+        // Fetch replied messages for this student
+        $reply_stmt = $conn->prepare("SELECT subject, message, reply, replied_at FROM messages WHERE student_name = ? AND reply IS NOT NULL ORDER BY replied_at DESC");
+        $reply_stmt->bind_param("s", $student_name);
+        $reply_stmt->execute();
+        $replies_result = $reply_stmt->get_result();
+
+        $replies = [];
+        while ($row = $replies_result->fetch_assoc()) {
+            $replies[] = $row;
+        }
+        $reply_stmt->close();
+        ?>
+
+        <?php if (count($replies)): ?>
+            <div class="card" style="margin-top: 40px;">
+                <div class="card-header"><i class="fas fa-reply"></i> Admin Replies</div>
+                <div class="card-body">
+                    <table class="table table-bordered">
+                        <thead>
+                            <tr>
+                                <th>Subject</th>
+                                <th>Your Message</th>
+                                <th>Admin Reply</th>
+                                <th>Replied At</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php foreach ($replies as $msg): ?>
+                                <tr>
+                                    <td><?= htmlspecialchars($msg['subject']) ?></td>
+                                    <td><?= nl2br(htmlspecialchars($msg['message'])) ?></td>
+                                    <td><?= nl2br(htmlspecialchars($msg['reply'])) ?></td>
+                                    <td><?= htmlspecialchars($msg['replied_at']) ?></td>
+                                </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        <?php endif; ?>
+    </div>
 </div>
+
+<script>
+    function toggleDarkMode() {
+        document.body.classList.toggle('dark');
+        localStorage.setItem('theme', document.body.classList.contains('dark') ? 'dark' : 'light');
+    }
+
+    function confirmLogout() {
+        if (confirm("Are you sure you want to log out?")) {
+            window.location.href = '../pages/logout.php';
+        }
+    }
+
+    function confirmPayment() {
+        return confirm("Are you sure you want to proceed with this payment?");
+    }
+
+    // Set theme on page load
+    if (localStorage.getItem('theme') === 'dark') {
+        document.body.classList.add('dark');
+    }
+
+    // Greeting based on time
+    const hour = new Date().getHours();
+    let greetingText = "Dashboard Overview";
+    if (hour < 12) greetingText = "Good Morning, <?= htmlspecialchars($student_name) ?>!";
+    else if (hour < 18) greetingText = "Good Afternoon, <?= htmlspecialchars($student_name) ?>!";
+    else greetingText = "Good Evening, <?= htmlspecialchars($student_name) ?>!";
+    document.getElementById("greeting").textContent = greetingText;
+</script>
 
 </body>
 </html>

@@ -18,7 +18,9 @@ include '../includes/database.php';
         body {
             margin: 0;
             height: 100vh;
-            background: radial-gradient(ellipse at bottom, #800000 0%, #2c003e 100%);
+            background-image: url('../assets/images/ies.webp');
+            background-size: cover;
+            background-position: center;
             overflow: hidden;
             display: flex;
             justify-content: center;
@@ -26,60 +28,12 @@ include '../includes/database.php';
             padding: 40px 20px;
         }
 
-        .background-blobs {
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            overflow: hidden;
-            z-index: 0;
-        }
-
-        .blob {
-            position: absolute;
-            border-radius: 50%;
-            filter: blur(80px);
-            opacity: 0.4;
-            animation: floatBlobs 20s infinite ease-in-out alternate;
-        }
-
-        .blob:nth-child(1) {
-            width: 300px;
-            height: 300px;
-            background: #ff6b6b;
-            top: 10%;
-            left: 10%;
-            animation-delay: 0s;
-        }
-
-        .blob:nth-child(2) {
-            width: 400px;
-            height: 400px;
-            background: #ffb347;
-            top: 30%;
-            right: 15%;
-            animation-delay: 3s;
-        }
-
-        .blob:nth-child(3) {
-            width: 250px;
-            height: 250px;
-            background: #6a5acd;
-            bottom: 15%;
-            left: 20%;
-            animation-delay: 6s;
-        }
-
-        @keyframes floatBlobs {
-            0% { transform: translateY(0px) translateX(0px); }
-            100% { transform: translateY(-50px) translateX(50px); }
-        }
-
         .register-container {
             position: relative;
             z-index: 1;
             width: 100%;
             max-width: 450px;
-            background: rgba(255, 255, 255, 0.1);
+            background: rgba(128, 0, 0, 0.7); /* Blured card color */
             backdrop-filter: blur(12px);
             -webkit-backdrop-filter: blur(12px);
             border-radius: 16px;
@@ -151,12 +105,6 @@ include '../includes/database.php';
 </head>
 <body>
 
-<div class="background-blobs">
-    <div class="blob"></div>
-    <div class="blob"></div>
-    <div class="blob"></div>
-</div>
-
 <div class="register-container">
     <h2>Create Your Account</h2>
     <form action="register-process.php" method="POST">
@@ -186,7 +134,7 @@ include '../includes/database.php';
         <button type="submit" class="btn">Register</button>
 
         <p class="login-text">
-            Already have an account? 
+            Already have an account?
             <a href="login.php">Login here</a>
         </p>
     </form>
