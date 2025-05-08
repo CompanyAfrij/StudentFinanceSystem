@@ -33,6 +33,23 @@ while ($row = $result->fetch_assoc()) {
     $enrollments[] = $row;
 }
 $stmt2->close();
+
+// Fetch messages AND replies for this student (using student_id for accuracy)
+$messages_stmt = $conn->prepare("
+    SELECT subject, message, reply, replied_at, sent_at 
+    FROM messages 
+    WHERE student_id = ? 
+    ORDER BY replied_at DESC, sent_at DESC
+");
+$messages_stmt->bind_param("i", $student_id);
+$messages_stmt->execute();
+$messages_result = $messages_stmt->get_result();
+
+$messages = [];
+while ($row = $messages_result->fetch_assoc()) {
+    $messages[] = $row;
+}
+$messages_stmt->close();
 ?>
 
 <!DOCTYPE html>
@@ -321,6 +338,45 @@ $stmt2->close();
         body.dark .no-courses {
             background-color: #1e1e1e;
         }
+
+        .message-item {
+            margin-bottom: 20px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background-color: white;
+        }
+
+        body.dark .message-item {
+            background-color: #1e1e1e;
+            border-color: #444;
+        }
+
+        .message-item h4 {
+            color: maroon;
+            margin-top: 0;
+        }
+
+        .message-item hr {
+            margin: 10px 0;
+            border: 0;
+            border-top: 1px solid #eee;
+        }
+
+        body.dark .message-item hr {
+            border-top-color: #444;
+        }
+
+        .reply-text {
+            background: #f9f9f9;
+            padding: 10px;
+            border-radius: 5px;
+            white-space: pre-line;
+        }
+
+        body.dark .reply-text {
+            background: #2a2a2a;
+        }
     </style>
 </head>
 <body>
@@ -473,44 +529,38 @@ $stmt2->close();
             </div>
         <?php endif; ?>
 
-        <?php
-        // Fetch replied messages for this student
-        $reply_stmt = $conn->prepare("SELECT subject, message, reply, replied_at FROM messages WHERE student_name = ? AND reply IS NOT NULL ORDER BY replied_at DESC");
-        $reply_stmt->bind_param("s", $student_name);
-        $reply_stmt->execute();
-        $replies_result = $reply_stmt->get_result();
-
-        $replies = [];
-        while ($row = $replies_result->fetch_assoc()) {
-            $replies[] = $row;
-        }
-        $reply_stmt->close();
-        ?>
-
-        <?php if (count($replies)): ?>
+        <!-- Admin Replies Section -->
+        <?php if (count($messages) > 0): ?>
             <div class="card" style="margin-top: 40px;">
-                <div class="card-header"><i class="fas fa-reply"></i> Admin Replies</div>
+                <div class="card-header">
+                    <i class="fas fa-envelope"></i> Your Messages & Admin Replies
+                </div>
                 <div class="card-body">
-                    <table class="table table-bordered">
-                        <thead>
-                            <tr>
-                                <th>Subject</th>
-                                <th>Your Message</th>
-                                <th>Admin Reply</th>
-                                <th>Replied At</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <?php foreach ($replies as $msg): ?>
-                                <tr>
-                                    <td><?= htmlspecialchars($msg['subject']) ?></td>
-                                    <td><?= nl2br(htmlspecialchars($msg['message'])) ?></td>
-                                    <td><?= nl2br(htmlspecialchars($msg['reply'])) ?></td>
-                                    <td><?= htmlspecialchars($msg['replied_at']) ?></td>
-                                </tr>
-                            <?php endforeach; ?>
-                        </tbody>
-                    </table>
+                    <div class="messages-container">
+                        <?php foreach ($messages as $msg): ?>
+                            <div class="message-item">
+                                <h4><?= htmlspecialchars($msg['subject']) ?></h4>
+                                <p><strong>Your Message:</strong></p>
+                                <p style="white-space: pre-line;"><?= htmlspecialchars($msg['message']) ?></p>
+                                <p style="font-size: 12px; color: #777;">
+                                    Sent on: <?= date("M j, Y g:i A", strtotime($msg['sent_at'])) ?>
+                                </p>
+                                
+                                <?php if (!empty($msg['reply'])): ?>
+                                    <hr>
+                                    <p><strong>Admin Reply:</strong></p>
+                                    <div class="reply-text">
+                                        <?= htmlspecialchars($msg['reply']) ?>
+                                    </div>
+                                    <p style="font-size: 12px; color: #777;">
+                                        Replied on: <?= date("M j, Y g:i A", strtotime($msg['replied_at'])) ?>
+                                    </p>
+                                <?php else: ?>
+                                    <p style="font-style: italic; color: #999;">No reply yet.</p>
+                                <?php endif; ?>
+                            </div>
+                        <?php endforeach; ?>
+                    </div>
                 </div>
             </div>
         <?php endif; ?>

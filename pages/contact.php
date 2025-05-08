@@ -71,8 +71,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 <div class="contact-section">
     <div class="contact-info">
         <h2>Get in Touch</h2>
-        <p><strong>Address:</strong> IES Campus, Near Tech Park, Indore, MP, India</p>
-        <p><strong>Phone:</strong> +91-9876543210</p>
+        <p><strong>Address:</strong> No.80, Main Street Addalaichenai</p>
+        <p><strong>Phone:</strong> +94 742000416</p>
         <p><strong>Email:</strong> info@iescampus.edu.in</p>
         <p><strong>Hours:</strong> Mon - Fri: 9:00 AM to 5:00 PM</p>
     </div>
