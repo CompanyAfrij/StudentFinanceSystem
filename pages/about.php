@@ -290,7 +290,7 @@
         <h2>Our Team</h2>
         <div class="team-grid">
             <div class="team-member">
-                <h3>Mr. Afrij</h3>
+                <h3>Mr. Azam</h3>
                 <p>Director</p>
             </div>
             <div class="team-member">

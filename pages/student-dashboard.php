@@ -386,7 +386,7 @@ $messages_stmt->close();
     <div class="sidebar">
         <div>
             <div class="sidebar-header">
-                <h3>Student Portal</h3>
+                <h3>Student Dashboard</h3>
                 <p>Welcome, <?= htmlspecialchars($student_name) ?></p>
             </div>
             <ul class="nav-menu">

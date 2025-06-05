@@ -225,7 +225,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['reply'], $_POST['messa
                 <li><a href="#" class="nav-link active"><i class="fas fa-home"></i> Dashboard</a></li>
                 <li><a href="manage-students.php" class="nav-link"><i class="fas fa-users"></i> Manage Students</a></li>
                 <li><a href="manage-courses.php" class="nav-link"><i class="fas fa-book"></i> Manage Courses</a></li>
-                <li><a href="student-payments.php" class="nav-link"><i class="fas fa-money-bill"></i> Student Payments</a></li>
+                
                 <li><a href="messages.php" class="nav-link"><i class="fas fa-envelope"></i> Messages</a></li>
             </ul>
         </div>
