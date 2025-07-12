@@ -34,7 +34,7 @@ if (isset($_GET['installment_id'])) {
             if ($paid_amount != $installment['amount']) {
                 $error = "You must pay exactly Rs " . number_format($installment['amount'], 2) . " for this installment.";
             } else {
-                $update = $conn->prepare("UPDATE installments SET paid = 1, paid_at = NOW() WHERE id = ?");
+                $update = $conn->prepare("UPDATE installments SET paid = 1, paid = NOW() WHERE id = ?");
                 $update->bind_param("i", $installment_id);
                 $update->execute();
 

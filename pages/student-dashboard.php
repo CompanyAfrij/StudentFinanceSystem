@@ -10,6 +10,9 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'student') {
 $student_id = $_SESSION['user_id'];
 
 $stmt = $conn->prepare("SELECT name, email FROM users WHERE id = ?");
+if ($stmt === false) {
+    die("Prepare failed: " . $conn->error);
+}
 $stmt->bind_param("i", $student_id);
 $stmt->execute();
 $stmt->bind_result($student_name, $student_email);
@@ -17,13 +20,17 @@ $stmt->fetch();
 $stmt->close();
 
 $query = "
-    SELECT e.id AS enrollment_id, c.course_name, c.duration, c.price AS total_fee, e.paid_amount, e.enrolled_at
+    SELECT e.id AS enrollment_id, c.course_name, c.duration, c.price AS total_fee, e.paid_amount, e.enrolled_at, 
+           COALESCE(e.completion_percentage, 0) AS completion_percentage
     FROM enrollments e
     JOIN courses c ON e.course_id = c.id
     WHERE e.student_id = ?
     ORDER BY e.enrolled_at DESC
 ";
 $stmt2 = $conn->prepare($query);
+if ($stmt2 === false) {
+    die("Prepare failed: " . $conn->error);
+}
 $stmt2->bind_param("i", $student_id);
 $stmt2->execute();
 $result = $stmt2->get_result();
@@ -34,13 +41,16 @@ while ($row = $result->fetch_assoc()) {
 }
 $stmt2->close();
 
-// Fetch messages AND replies for this student (using student_id for accuracy)
+// Fetch messages AND replies for this student
 $messages_stmt = $conn->prepare("
     SELECT subject, message, reply, replied_at, sent_at 
     FROM messages 
     WHERE student_id = ? 
     ORDER BY replied_at DESC, sent_at DESC
 ");
+if ($messages_stmt === false) {
+    die("Prepare failed: " . $conn->error);
+}
 $messages_stmt->bind_param("i", $student_id);
 $messages_stmt->execute();
 $messages_result = $messages_stmt->get_result();
@@ -50,6 +60,14 @@ while ($row = $messages_result->fetch_assoc()) {
     $messages[] = $row;
 }
 $messages_stmt->close();
+
+// Count unread messages
+$unread_count = 0;
+foreach ($messages as $msg) {
+    if (empty($msg['replied_at']) || empty($msg['reply'])) {
+        $unread_count++;
+    }
+}
 ?>
 
 <!DOCTYPE html>
@@ -96,6 +114,12 @@ $messages_stmt->close();
             display: flex;
             flex-direction: column;
             justify-content: space-between;
+            transform: translateX(-100%);
+            transition: var(--transition);
+        }
+
+        .sidebar.active {
+            transform: translateX(0);
         }
 
         .sidebar-header { text-align: center; margin-bottom: 30px; }
@@ -108,18 +132,19 @@ $messages_stmt->close();
             color: #f1f1f1;
             text-decoration: none;
             border-radius: 4px;
-            transition: var(--transition);
         }
         .nav-link i { margin-right: 10px; }
-        .nav-link:hover, .nav-link.active { 
-            background-color: rgba(255, 255, 255, 0.2);
-            transform: translateX(5px);
-        }
+        .nav-link:hover, .nav-link.active { background-color: rgba(255, 255, 255, 0.2); }
 
         .main-content {
-            margin-left: 250px;
+            margin-left: 0;
             padding: 40px;
             flex: 1;
+            transition: var(--transition);
+        }
+
+        .main-content.sidebar-active {
+            margin-left: 250px;
         }
 
         .header {
@@ -127,6 +152,37 @@ $messages_stmt->close();
             justify-content: space-between;
             align-items: center;
             margin-bottom: 30px;
+        }
+
+        .burger-menu {
+            font-size: 24px;
+            background: none;
+            border: none;
+            color: var(--primary-color);
+            cursor: pointer;
+            padding: 10px;
+            display: block;
+        }
+
+        body.dark .burger-menu {
+            color: var(--dark-text);
+        }
+
+        .notification-bell {
+            position: relative;
+            font-size: 20px;
+            cursor: pointer;
+        }
+
+        .notification-bell .badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background-color: red;
+            color: white;
+            border-radius: 50%;
+            padding: 2px 6px;
+            font-size: 12px;
         }
 
         .dark-mode-toggle {
@@ -139,12 +195,6 @@ $messages_stmt->close();
             border-radius: 25px;
             cursor: pointer;
             font-weight: bold;
-            transition: var(--transition);
-        }
-
-        .dark-mode-toggle:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
         }
 
         .cards-container {
@@ -159,17 +209,11 @@ $messages_stmt->close();
             border-radius: 10px;
             box-shadow: var(--shadow);
             padding: 20px;
-            transition: var(--transition);
         }
 
         body.dark .card {
             background-color: #1e1e1e;
             color: var(--dark-text);
-        }
-
-        .card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 8px 16px rgba(0,0,0,0.2);
         }
 
         .card-header {
@@ -197,12 +241,6 @@ $messages_stmt->close();
             display: block;
             text-align: center;
             margin-top: 10px;
-            transition: var(--transition);
-        }
-
-        .card-btn:hover {
-            background-color: #ffab00;
-            transform: translateY(-2px);
         }
 
         .logout-btn {
@@ -215,13 +253,6 @@ $messages_stmt->close();
             border-radius: 25px;
             cursor: pointer;
             font-weight: bold;
-            transition: var(--transition);
-        }
-
-        .logout-btn:hover {
-            background: #ff5e3a;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
         }
 
         .profile-info {
@@ -319,12 +350,6 @@ $messages_stmt->close();
             border-radius: 6px;
             cursor: pointer;
             font-weight: 500;
-            transition: var(--transition);
-        }
-
-        .installment-table form button:hover {
-            background-color: var(--primary-hover);
-            transform: translateY(-2px);
         }
 
         .no-courses {
@@ -377,13 +402,99 @@ $messages_stmt->close();
         body.dark .reply-text {
             background: #2a2a2a;
         }
+
+        .progress-bar {
+            width: 100%;
+            background-color: #ddd;
+            border-radius: 5px;
+            margin-top: 10px;
+        }
+
+        .progress {
+            height: 20px;
+            background-color: var(--accent-color);
+            border-radius: 5px;
+            text-align: center;
+            color: white;
+            line-height: 20px;
+        }
+
+        .calendar {
+            width: 100%;
+            margin-top: 20px;
+        }
+
+        .calendar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .calendar-nav {
+            background: none;
+            border: none;
+            color: var(--primary-color);
+            font-size: 18px;
+            cursor: pointer;
+        }
+
+        body.dark .calendar-nav {
+            color: var(--dark-text);
+        }
+
+        .calendar-nav:disabled {
+            color: #ccc;
+            cursor: not-allowed;
+        }
+
+        .calendar-days {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            text-align: center;
+        }
+
+        .calendar-day {
+            padding: 10px;
+            border: 1px solid #ddd;
+        }
+
+        body.dark .calendar-day {
+            border-color: #444;
+        }
+
+        .calendar-day-header {
+            font-weight: bold;
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        body.dark .calendar-day-header {
+            background-color: #600000;
+        }
+
+        .calendar-day.event {
+            background-color: rgba(255, 99, 71, 0.3);
+        }
+
+        body.dark .calendar-day.event {
+            background-color: rgba(255, 99, 71, 0.5);
+        }
+
+        .calendar-day.other-month {
+            color: #999;
+        }
+
+        body.dark .calendar-day.other-month {
+            color: #666;
+        }
     </style>
 </head>
 <body>
 
 <div class="dashboard">
     <!-- Sidebar -->
-    <div class="sidebar">
+    <div class="sidebar" id="sidebar">
         <div>
             <div class="sidebar-header">
                 <h3>Student Dashboard</h3>
@@ -402,9 +513,16 @@ $messages_stmt->close();
     </div>
 
     <!-- Main Content -->
-    <div class="main-content">
+    <div class="main-content" id="main-content">
         <div class="header">
+            <button class="burger-menu" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
             <h1 id="greeting">Dashboard Overview</h1>
+            <div class="notification-bell" onclick="alert('Notifications: <?= $unread_count ?> unread messages')">
+                <i class="fas fa-bell"></i>
+                <?php if ($unread_count > 0): ?>
+                    <span class="badge"><?= $unread_count ?></span>
+                <?php endif; ?>
+            </div>
         </div>
 
         <div class="profile-info">
@@ -480,6 +598,9 @@ $messages_stmt->close();
                         <?php
                         $enrollment_id = $enroll['enrollment_id'];
                         $installments = $conn->prepare("SELECT id, installment_number, amount, due_date, paid FROM installments WHERE enrollment_id = ?");
+                        if ($installments === false) {
+                            die("Prepare failed: " . $conn->error);
+                        }
                         $installments->bind_param("i", $enrollment_id);
                         $installments->execute();
                         $result = $installments->get_result();
@@ -529,6 +650,41 @@ $messages_stmt->close();
             </div>
         <?php endif; ?>
 
+        <!-- Academic Calendar -->
+        <div class="card" style="margin-top: 40px;">
+            <div class="card-header"><i class="fas fa-calendar-alt"></i> Academic Calendar</div>
+            <div class="card-body">
+                <ul>
+                    <li>Exam Period: July 15-20, 2025</li>
+                    <li>Fee Payment Deadline: July 10, 2025</li>
+                    <li>Next Semester Start: August 01, 2025</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Progress Tracker -->
+        <?php if (count($enrollments)): ?>
+            <div class="card" style="margin-top: 40px;">
+                <div class="card-header"><i class="fas fa-chart-line"></i> Progress Tracker</div>
+                <div class="card-body">
+                    <?php foreach ($enrollments as $enroll): ?>
+                        <p><?= htmlspecialchars($enroll['course_name']) ?> Progress:</p>
+                        <div class="progress-bar">
+                            <div class="progress" style="width: <?= $enroll['completion_percentage'] ?>%;"><?= $enroll['completion_percentage'] ?>%</div>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+            </div>
+        <?php endif; ?>
+
+        <!-- Interactive Calendar -->
+        <div class="card" style="margin-top: 40px;">
+            <div class="card-header"><i class="fas fa-calendar"></i> Interactive Calendar</div>
+            <div class="card-body">
+                <div class="calendar" id="calendar"></div>
+            </div>
+        </div>
+
         <!-- Admin Replies Section -->
         <?php if (count($messages) > 0): ?>
             <div class="card" style="margin-top: 40px;">
@@ -571,6 +727,7 @@ $messages_stmt->close();
     function toggleDarkMode() {
         document.body.classList.toggle('dark');
         localStorage.setItem('theme', document.body.classList.contains('dark') ? 'dark' : 'light');
+        console.log("Dark mode toggled");
     }
 
     function confirmLogout() {
@@ -583,9 +740,12 @@ $messages_stmt->close();
         return confirm("Are you sure you want to proceed with this payment?");
     }
 
-    // Set theme on page load
-    if (localStorage.getItem('theme') === 'dark') {
-        document.body.classList.add('dark');
+    function toggleSidebar() {
+        const sidebar = document.getElementById('sidebar');
+        const mainContent = document.getElementById('main-content');
+        sidebar.classList.toggle('active');
+        mainContent.classList.toggle('sidebar-active');
+        console.log("Sidebar toggled");
     }
 
     // Greeting based on time
@@ -595,6 +755,92 @@ $messages_stmt->close();
     else if (hour < 18) greetingText = "Good Afternoon, <?= htmlspecialchars($student_name) ?>!";
     else greetingText = "Good Evening, <?= htmlspecialchars($student_name) ?>!";
     document.getElementById("greeting").textContent = greetingText;
+    console.log("Greeting set to: " + greetingText);
+
+    // Calendar Logic
+    const calendar = document.getElementById('calendar');
+    const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+    const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
+    let currentDate = new Date();
+    let currentMonth = currentDate.getMonth();
+    let currentYear = currentDate.getFullYear();
+
+    const events = [
+        { date: new Date(2025, 6, 10), title: "Fee Payment Deadline" }, // July 10, 2025
+        { date: new Date(2025, 6, 15), title: "Exam Period Start" },    // July 15, 2025
+        { date: new Date(2025, 6, 20), title: "Exam Period End" },      // July 20, 2025
+        { date: new Date(2025, 7, 1), title: "Next Semester Start" }    // August 01, 2025
+    ];
+
+    function renderCalendar(month, year) {
+        calendar.innerHTML = '';
+        const firstDay = new Date(year, month, 1);
+        const lastDay = new Date(year, month + 1, 0);
+        const daysInMonth = lastDay.getDate();
+        const startingDay = firstDay.getDay();
+
+        const header = document.createElement('div');
+        header.className = 'calendar-header';
+        header.innerHTML = `
+            <button class="calendar-nav" onclick="changeMonth(-1)" ${month === 0 ? 'disabled' : ''}><i class="fas fa-chevron-left"></i></button>
+            <h3>${monthNames[month]} ${year}</h3>
+            <button class="calendar-nav" onclick="changeMonth(1)" ${month === 11 ? 'disabled' : ''}><i class="fas fa-chevron-right"></i></button>
+        `;
+        calendar.appendChild(header);
+
+        const daysHeader = document.createElement('div');
+        daysHeader.className = 'calendar-days';
+        days.forEach(day => {
+            const dayElement = document.createElement('div');
+            dayElement.className = 'calendar-day calendar-day-header';
+            dayElement.textContent = day;
+            daysHeader.appendChild(dayElement);
+        });
+        calendar.appendChild(daysHeader);
+
+        const daysContainer = document.createElement('div');
+        daysContainer.className = 'calendar-days';
+        let dayCount = 1;
+        for (let i = 0; i < 6; i++) {
+            for (let j = 0; j < 7; j++) {
+                if (i === 0 && j < startingDay) {
+                    const emptyDay = document.createElement('div');
+                    emptyDay.className = 'calendar-day other-month';
+                    daysContainer.appendChild(emptyDay);
+                } else if (dayCount <= daysInMonth) {
+                    const dayElement = document.createElement('div');
+                    dayElement.className = 'calendar-day';
+                    const currentDate = new Date(year, month, dayCount);
+                    if (events.some(event => event.date.toDateString() === currentDate.toDateString())) {
+                        dayElement.className += ' event';
+                        const event = events.find(event => event.date.toDateString() === currentDate.toDateString());
+                        dayElement.title = event.title;
+                    }
+                    dayElement.textContent = dayCount;
+                    daysContainer.appendChild(dayElement);
+                    dayCount++;
+                }
+            }
+            if (dayCount > daysInMonth) break;
+        }
+        calendar.appendChild(daysContainer);
+    }
+
+    function changeMonth(delta) {
+        currentMonth += delta;
+        if (currentMonth < 0) {
+            currentMonth = 11;
+            currentYear--;
+        } else if (currentMonth > 11) {
+            currentMonth = 0;
+            currentYear++;
+        }
+        renderCalendar(currentMonth, currentYear);
+    }
+
+    // Initial render
+    renderCalendar(currentMonth, currentYear);
 </script>
 
 </body>

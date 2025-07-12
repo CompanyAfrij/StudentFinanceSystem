@@ -78,6 +78,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['reply'], $_POST['messa
             display: flex;
             flex-direction: column;
             justify-content: space-between;
+            transform: translateX(-100%);
+            transition: var(--transition);
+        }
+
+        .sidebar.active {
+            transform: translateX(0);
         }
 
         .sidebar-header { text-align: center; margin-bottom: 30px; }
@@ -95,15 +101,33 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['reply'], $_POST['messa
         .nav-link:hover, .nav-link.active { background-color: rgba(255, 255, 255, 0.2); }
 
         .main-content {
-            margin-left: 250px;
+            margin-left: 0;
             padding: 40px;
             flex: 1;
+            transition: var(--transition);
+        }
+
+        .main-content.sidebar-active {
+            margin-left: 250px;
         }
 
         .header {
             display: flex;
             justify-content: space-between;
             align-items: center;
+        }
+
+        .burger-menu {
+            font-size: 24px;
+            background: none;
+            border: none;
+            color: var(--primary-color);
+            cursor: pointer;
+            padding: 10px;
+        }
+
+        body.dark .burger-menu {
+            color: var(--dark-text);
         }
 
         .dark-mode-toggle {
@@ -215,7 +239,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['reply'], $_POST['messa
 
 <div class="dashboard">
     <!-- Sidebar -->
-    <div class="sidebar">
+    <div class="sidebar" id="sidebar">
         <div>
             <div class="sidebar-header">
                 <h3>Admin Panel</h3>
@@ -225,8 +249,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['reply'], $_POST['messa
                 <li><a href="#" class="nav-link active"><i class="fas fa-home"></i> Dashboard</a></li>
                 <li><a href="manage-students.php" class="nav-link"><i class="fas fa-users"></i> Manage Students</a></li>
                 <li><a href="manage-courses.php" class="nav-link"><i class="fas fa-book"></i> Manage Courses</a></li>
-                
+                <li><a href="budget-allocation.php" class="nav-link"><i class="fas fa-money-bill"></i> Budget Allocation</a></li>
                 <li><a href="messages.php" class="nav-link"><i class="fas fa-envelope"></i> Messages</a></li>
+                <li><a href="salary-transaction.php" class="nav-link"><i class="fas fa-money-check-alt"></i> Salary Transactions</a></li>
             </ul>
         </div>
         <div>
@@ -236,8 +261,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['reply'], $_POST['messa
     </div>
 
     <!-- Main Content -->
-    <div class="main-content">
+    <div class="main-content" id="main-content">
         <div class="header">
+            <button class="burger-menu" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
             <h1 id="greeting">Dashboard Overview</h1>
         </div>
 
@@ -279,6 +305,23 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['reply'], $_POST['messa
                     <a href="messages.php" class="card-btn">Go to Messages</a>
                 </div>
             </div>
+
+            <div class="card">
+                 <div class="card-header"><i class="fas fa-money-check-alt"></i> Salary Transactions</div>
+                 <div class="card-body">
+                     <p>Manage employee salary transactions</p>
+                     <a href="salary-transaction.php" class="card-btn">View Transactions</a>
+                </div>
+            </div>
+
+
+            <div class="card">
+                <div class="card-header"><i class="fas fa-money-bill"></i> Budget Allocation</div>
+                <div class="card-body">
+                    <p>Manage budget allocations</p>
+                    <a href="budget-allocation.php" class="card-btn">Go to Budget Allocation</a>
+                </div>
+            </div>
         </div>
 
         <!-- Student Messages Section -->
@@ -316,6 +359,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['reply'], $_POST['messa
         if (confirm("Are you sure you want to log out?")) {
             window.location.href = '../pages/logout.php';
         }
+    }
+
+    function toggleSidebar() {
+        const sidebar = document.getElementById('sidebar');
+        const mainContent = document.getElementById('main-content');
+        sidebar.classList.toggle('active');
+        mainContent.classList.toggle('sidebar-active');
     }
 
     if (localStorage.getItem('theme') === 'dark') {
